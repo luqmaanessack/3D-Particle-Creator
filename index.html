@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive 3D Particles - Hand Tracking</title>
+    <title>Interactive Spatial Solar System</title>
     <style>
         :root {
             --bg-color: #050508;
             --panel-bg: rgba(15, 15, 25, 0.65);
             --panel-border: rgba(255, 255, 255, 0.08);
-            --accent: #00f0ff;
+            --accent: #FFB800;
             --text-main: #ffffff;
             --text-dim: #9ba1a6;
         }
@@ -44,9 +44,10 @@
             -webkit-backdrop-filter: blur(16px);
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
             border: 1px solid var(--panel-border);
-            width: 220px;
+            width: 260px;
             display: none;
             animation: fadeIn 1s ease-out;
+            transition: border-color 0.5s ease;
         }
 
         @keyframes fadeIn {
@@ -54,85 +55,58 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        h1 {
-            font-size: 1.1rem;
+        #planet-name {
+            font-size: 2rem;
             margin-top: 0;
-            margin-bottom: 20px;
+            margin-bottom: 5px;
             text-align: center;
-            font-weight: 600;
-            letter-spacing: 2px;
+            font-weight: 700;
+            letter-spacing: 3px;
             text-transform: uppercase;
-            background: linear-gradient(90deg, #fff, #aaa);
+            background: linear-gradient(90deg, #fff, var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            transition: all 0.5s ease;
         }
 
-        .ui-section {
+        #planet-type {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             margin-bottom: 20px;
         }
 
-        .ui-section label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-
-        button {
-            display: block;
-            width: 100%;
-            padding: 12px;
+        .info-row {
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-main);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             font-size: 0.9rem;
-            font-weight: 500;
-            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 5px;
         }
 
-        button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        .info-label {
+            color: var(--text-dim);
         }
 
-        button:active {
-            transform: translateY(0);
+        .info-value {
+            font-weight: 600;
+            color: #fff;
         }
-
-        button.active {
-            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
-            border-color: transparent;
-            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
-
-        .color-wrapper {
-            position: relative;
-            width: 100%;
-            height: 44px;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        input[type="color"] {
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            width: calc(100% + 20px);
-            height: calc(100% + 20px);
-            border: none;
-            cursor: pointer;
-            padding: 0;
+        
+        .fun-fact {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #ccc;
+            font-style: italic;
+            padding: 12px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+            transition: border-color 0.5s ease;
         }
 
         .instruction {
@@ -141,8 +115,31 @@
             text-align: center;
             margin-bottom: 0;
             line-height: 1.4;
-            padding-top: 10px;
+            padding-top: 15px;
+            margin-top: 15px;
             border-top: 1px solid var(--panel-border);
+        }
+
+        #nav-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+            pointer-events: none; /* Gestures only now! */
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .nav-dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+            transform: scale(1.3);
         }
 
         #loading {
@@ -196,34 +193,98 @@
             object-fit: cover;
             transform: scaleX(-1);
         }
+
+        #gesture-toast {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--accent);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 100;
+            pointer-events: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .show-toast {
+            opacity: 1 !important;
+            transform: translateX(-50%) translateY(0) !important;
+        }
+
+        #start-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(5, 5, 8, 0.9);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: opacity 0.5s ease;
+        }
+        #start-overlay h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #00f0ff, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        #start-overlay p {
+            font-size: 1.2rem;
+            color: var(--text-dim);
+        }
     </style>
 </head>
 <body>
+    <div id="start-overlay">
+        <h2>Spatial Solar System</h2>
+        <p>Click anywhere to start the experience and enable audio.</p>
+    </div>
+
     <div id="loading">
         <div class="spinner"></div>
-        <div id="loading-text">Loading Models & Camera...</div>
+        <div id="loading-text">Loading Spatial Cosmos...</div>
     </div>
     
     <div id="canvas-container"></div>
     
     <div id="ui-container">
-        <h1>Particles</h1>
-        <div class="ui-section">
-            <label>Shape Templates</label>
-            <button class="template-btn active" data-type="saturn">Saturn</button>
-            <button class="template-btn" data-type="hearts">Hearts</button>
-            <button class="template-btn" data-type="flowers">Flowers</button>
-            <button class="template-btn" data-type="buddha">Buddha</button>
-            <button class="template-btn" data-type="fireworks">Fireworks</button>
+        <h1 id="planet-name">Sun</h1>
+        <div id="planet-type">Star</div>
+        
+        <div class="info-row">
+            <span class="info-label">Diameter</span>
+            <span class="info-value" id="info-diameter">-</span>
         </div>
-        <div class="ui-section">
-            <label>Particle Color</label>
-            <div class="color-wrapper">
-                <input type="color" id="color-picker" value="#00f0ff">
-            </div>
+        <div class="info-row">
+            <span class="info-label">Moons</span>
+            <span class="info-value" id="info-moons">-</span>
         </div>
+        <div class="info-row">
+            <span class="info-label">Dist. to Sun</span>
+            <span class="info-value" id="info-distance">-</span>
+        </div>
+        
+        <div class="fun-fact" id="fun-fact">
+            -
+        </div>
+        
+        <div id="nav-dots">
+            <!-- Populated by JS -->
+        </div>
+
         <div class="instruction">
-            Show your hand to the camera. Open and close your hand to interact.
+            ✋ <b>Swipe hand</b> to fly between planets<br>
+            🖐 <b>Open/close hand</b> to zoom current planet
         </div>
     </div>
 
@@ -231,6 +292,8 @@
         <video id="input-video" autoplay playsinline muted></video>
         <canvas id="output-canvas" width="640" height="480"></canvas>
     </div>
+
+    <div id="gesture-toast">Swipe Detected</div>
 
     <!-- Three.js and OrbitControls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -242,44 +305,319 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 
     <script>
-        const particleCount = 12000;
-        let scene, camera, renderer, particles, controls;
-        let currentTemplate = 'saturn';
-        let basePositions = new Float32Array(particleCount * 3); 
+        // --- SPATIAL SOLAR SYSTEM DATA MODEL ---
+        const SPACING = 25; // Distance between planets on X-axis
+
+        const SOLAR_SYSTEM = [
+            {
+                name: "Sun",
+                type: "Yellow Dwarf Star",
+                color: "#FFB800",
+                count: 8000,
+                diameter: "1,392,700 km",
+                moons: "0",
+                distance: "0 AU",
+                funFact: "The Sun contains 99.86% of the mass in the entire solar system.",
+                generate: () => {
+                    const u = Math.random();
+                    const v = Math.random();
+                    const theta = u * 2.0 * Math.PI;
+                    const phi = Math.acos(2.0 * v - 1.0);
+                    let r = 4.0;
+                    if (Math.random() > 0.8) r += Math.random() * 2.5; // flares
+                    else r += Math.random() * 0.3;
+                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
+                }
+            },
+            {
+                name: "Mercury",
+                type: "Terrestrial Planet",
+                color: "#B0B0B0",
+                count: 2000,
+                diameter: "4,880 km",
+                moons: "0",
+                distance: "0.39 AU",
+                funFact: "Despite being closest to the Sun, Mercury is not the hottest planet.",
+                generate: () => {
+                    const u = Math.random();
+                    const v = Math.random();
+                    const theta = u * 2.0 * Math.PI;
+                    const phi = Math.acos(2.0 * v - 1.0);
+                    let r = 1.5;
+                    const noise = Math.sin(theta * 10) * Math.cos(phi * 10) * 0.05;
+                    r += noise;
+                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
+                }
+            },
+            {
+                name: "Venus",
+                type: "Terrestrial Planet",
+                color: "#E6B873",
+                count: 2500,
+                diameter: "12,104 km",
+                moons: "0",
+                distance: "0.72 AU",
+                funFact: "Venus spins in the opposite direction to most planets.",
+                generate: () => {
+                    const u = Math.random();
+                    const v = Math.random();
+                    const theta = u * 2.0 * Math.PI;
+                    const phi = Math.acos(2.0 * v - 1.0);
+                    let r = 2.0;
+                    if (Math.random() > 0.6) r += 0.15;
+                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
+                }
+            },
+            {
+                name: "Earth",
+                type: "Terrestrial Planet",
+                color: "#3B82F6",
+                count: 3000,
+                diameter: "12,742 km",
+                moons: "1",
+                distance: "1.00 AU",
+                funFact: "Earth is the only planet not named after a mythological god or goddess.",
+                generate: () => {
+                    const u = Math.random();
+                    const v = Math.random();
+                    const theta = u * 2.0 * Math.PI;
+                    const phi = Math.acos(2.0 * v - 1.0);
+                    let r = 2.1;
+                    const land = Math.sin(theta * 3) * Math.cos(phi * 2) + Math.sin(theta * 6 + phi * 4) * 0.5;
+                    if (land > 0.3 && Math.random() > 0.2) r += 0.05;
+                    else if (Math.random() > 0.8) r += 0.2; 
+                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
+                }
+            },
+            {
+                name: "Mars",
+                type: "Terrestrial Planet",
+                color: "#EF4444",
+                count: 2000,
+                diameter: "6,779 km",
+                moons: "2",
+                distance: "1.52 AU",
+                funFact: "Mars is home to Olympus Mons, the tallest mountain in the solar system.",
+                generate: () => {
+                    const u = Math.random();
+                    const v = Math.random();
+                    const theta = u * 2.0 * Math.PI;
+                    const phi = Math.acos(2.0 * v - 1.0);
+                    let r = 1.7;
+                    if ((phi < 0.2 || phi > Math.PI - 0.2) && Math.random() > 0.3) r += 0.05;
+                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
+                }
+            },
+            {
+                name: "Jupiter",
+                type: "Gas Giant",
+                color: "#D97757",
+                count: 5000,
+                diameter: "139,820 km",
+                moons: "95",
+                distance: "5.20 AU",
+                funFact: "Jupiter's Great Red Spot is a giant storm bigger than Earth.",
+                generate: () => {
+                    const u = Math.random();
+                    const v = Math.random();
+                    const theta = u * 2.0 * Math.PI;
+                    const phi = Math.acos(2.0 * v - 1.0);
+                    let r = 4.5;
+                    const band = Math.sin(phi * 15);
+                    if (band > 0.5 && Math.random() > 0.5) r -= 0.1;
+                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * 0.9 * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
+                }
+            },
+            {
+                name: "Saturn",
+                type: "Gas Giant",
+                color: "#FCD34D",
+                count: 5000,
+                diameter: "116,460 km",
+                moons: "146",
+                distance: "9.58 AU",
+                funFact: "Saturn has the most extensive ring system of any planet.",
+                generate: (i, count) => {
+                    if (i < count * 0.4) {
+                        const u = Math.random();
+                        const v = Math.random();
+                        const theta = u * 2.0 * Math.PI;
+                        const phi = Math.acos(2.0 * v - 1.0);
+                        const r = 3.5 + Math.random() * 0.1;
+                        return { x: r * Math.sin(phi) * Math.cos(theta), y: r * 0.9 * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
+                    } else {
+                        const angle = Math.random() * Math.PI * 2;
+                        let r = Math.random() < 0.6 ? 4.5 + Math.random() * 2.5 : 7.5 + Math.random() * 1.5;
+                        let x = r * Math.cos(angle);
+                        let y = (Math.random() - 0.5) * 0.1;
+                        let z = r * Math.sin(angle);
+                        const tilt = 0.4;
+                        return { x, y: y * Math.cos(tilt) - z * Math.sin(tilt), z: y * Math.sin(tilt) + z * Math.cos(tilt) };
+                    }
+                }
+            },
+            {
+                name: "Uranus",
+                type: "Ice Giant",
+                color: "#67E8F9",
+                count: 3500,
+                diameter: "50,724 km",
+                moons: "28",
+                distance: "19.18 AU",
+                funFact: "Uranus rotates on its side, with an axial tilt of 98 degrees.",
+                generate: (i, count) => {
+                    if (i < count * 0.7) {
+                        const u = Math.random();
+                        const v = Math.random();
+                        const theta = u * 2.0 * Math.PI;
+                        const phi = Math.acos(2.0 * v - 1.0);
+                        const r = 2.8;
+                        return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
+                    } else {
+                        const angle = Math.random() * Math.PI * 2;
+                        const r = 4.2 + Math.random() * 0.3;
+                        return { x: r * Math.cos(angle), y: r * Math.sin(angle), z: (Math.random() - 0.5) * 0.1 };
+                    }
+                }
+            },
+            {
+                name: "Neptune",
+                type: "Ice Giant",
+                color: "#3730A3",
+                count: 3500,
+                diameter: "49,244 km",
+                moons: "16",
+                distance: "30.07 AU",
+                funFact: "Winds on Neptune can reach up to 2,100 km/h, the fastest in the solar system.",
+                generate: (i, count) => {
+                    const u = Math.random();
+                    const v = Math.random();
+                    const theta = u * 2.0 * Math.PI;
+                    const phi = Math.acos(2.0 * v - 1.0);
+                    let r = 2.7;
+                    if (phi > 1.2 && phi < 1.6 && theta > 1.0 && theta < 1.5 && Math.random() > 0.3) r += 0.1;
+                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
+                }
+            }
+        ];
+
+        // --- APP STATE & GLOBALS ---
+        let scene, camera, renderer, controls;
+        let starParticles;
+        const planetObjects = []; // Stores { mesh, basePositions, randomOffsets, count }
+        
+        let currentPlanetIndex = 0;
+        let targetCamPos = new THREE.Vector3(0, 3, 18);
+        let targetLookAt = new THREE.Vector3(0, 0, 0);
+
         let handTension = 1.0; 
         let targetHandTension = 1.0;
         let time = 0;
         let lastDetectionTime = 0;
+        
+        // --- Zone-based navigation state machine ---
+        // Screen is split: LEFT (<0.30) | CENTER (0.30-0.70) | RIGHT (>0.70)
+        // Navigation only fires on: CENTER → LEFT or CENTER → RIGHT transition.
+        // Hand MUST return to CENTER before next navigation can fire.
+        const ZONE_LEFT  = 'LEFT';
+        const ZONE_CENTER= 'CENTER';
+        const ZONE_RIGHT = 'RIGHT';
+        let handZone = ZONE_CENTER;    // current zone
+        let navigationArmed = true;    // can we fire? only true when in CENTER
+        let lastNavTime = 0;           // debounce: min 1500ms between navs
+
+        // Audio Context (Synth Drone)
+        let audioCtx, oscillator, osc2, osc3, gainNode, filterNode;
+        let isAudioPlaying = false;
 
         initThreeJS();
+        initUI();
         initMediaPipe();
+        
+        document.getElementById('start-overlay').addEventListener('click', function() {
+            this.style.opacity = '0';
+            setTimeout(() => this.style.display = 'none', 500);
+            startAudio();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        });
 
-        // Procedural texture for soft glowing particles
+        function startAudio() {
+            if (isAudioPlaying) return;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                gainNode = audioCtx.createGain();
+                gainNode.gain.value = 0.05; // Very gentle volume
+                
+                filterNode = audioCtx.createBiquadFilter();
+                filterNode.type = 'lowpass';
+                filterNode.frequency.value = 800; // Soft tone
+                
+                gainNode.connect(filterNode);
+                filterNode.connect(audioCtx.destination);
+
+                // Root note (C4) - Sine wave for gentleness
+                oscillator = audioCtx.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.value = 261.63; 
+                oscillator.connect(gainNode);
+                oscillator.start();
+
+                // Third note (E4)
+                osc2 = audioCtx.createOscillator();
+                osc2.type = 'sine';
+                osc2.frequency.value = 329.63; 
+                osc2.connect(gainNode);
+                osc2.start();
+
+                // Fifth note (G4)
+                osc3 = audioCtx.createOscillator();
+                osc3.type = 'sine';
+                osc3.frequency.value = 392.00; 
+                osc3.connect(gainNode);
+                osc3.start();
+
+                isAudioPlaying = true;
+            } catch (e) {
+                console.log("Audio synthesis not supported.");
+            }
+        }
+
         function createParticleTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 64;
             canvas.height = 64;
             const ctx = canvas.getContext('2d');
-            
             const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
             gradient.addColorStop(0, 'rgba(255,255,255,1)');
             gradient.addColorStop(0.2, 'rgba(255,255,255,0.8)');
             gradient.addColorStop(0.6, 'rgba(255,255,255,0.1)');
             gradient.addColorStop(1, 'rgba(0,0,0,0)');
-            
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, 64, 64);
-            
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createStarTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 16;
+            canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(8, 8, 4, 0, Math.PI * 2);
+            ctx.fill();
             return new THREE.CanvasTexture(canvas);
         }
 
         function initThreeJS() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x050508, 0.02);
+            scene.fog = new THREE.FogExp2(0x050508, 0.015);
 
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 20;
-            camera.position.y = 5;
+            camera.position.copy(targetCamPos);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -290,169 +628,128 @@
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
             controls.autoRotate = true;
-            controls.autoRotateSpeed = 0.5;
+            controls.autoRotateSpeed = 0.8;
             controls.enablePan = false;
+            controls.minDistance = 5;
+            controls.maxDistance = 40;
+            controls.target.copy(targetLookAt);
 
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            const randomOffsets = new Float32Array(particleCount);
-            
-            generateTemplate('saturn');
-            
-            // Initialize particles scattered randomly
-            for(let i = 0; i < particleCount; i++) {
-                positions[i*3] = (Math.random() - 0.5) * 100;
-                positions[i*3+1] = (Math.random() - 0.5) * 100;
-                positions[i*3+2] = (Math.random() - 0.5) * 100;
-                randomOffsets[i] = Math.random() * Math.PI * 2;
+            // Generate ALL planets spatially
+            SOLAR_SYSTEM.forEach((planetData, index) => {
+                const count = planetData.count;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(count * 3);
+                const basePositions = new Float32Array(count * 3);
+                const randomOffsets = new Float32Array(count);
+                
+                for (let i = 0; i < count; i++) {
+                    const pos = planetData.generate(i, count);
+                    
+                    // Local coords
+                    basePositions[i*3] = pos.x;
+                    basePositions[i*3+1] = pos.y;
+                    basePositions[i*3+2] = pos.z;
+                    
+                    // Start randomly scattered
+                    positions[i*3] = pos.x + (Math.random() - 0.5) * 40;
+                    positions[i*3+1] = pos.y + (Math.random() - 0.5) * 40;
+                    positions[i*3+2] = pos.z + (Math.random() - 0.5) * 40;
+                    
+                    randomOffsets[i] = Math.random() * Math.PI * 2;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('randomOffset', new THREE.BufferAttribute(randomOffsets, 1));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 0.35,
+                    color: new THREE.Color(planetData.color),
+                    transparent: true,
+                    opacity: 0.9,
+                    map: createParticleTexture(),
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+
+                const mesh = new THREE.Points(geometry, material);
+                
+                // Position mesh along X-axis
+                mesh.position.x = index * SPACING;
+                scene.add(mesh);
+                
+                planetObjects.push({ mesh, basePositions, randomOffsets, count });
+            });
+
+            // Background Stars (Wide distribution)
+            const starGeo = new THREE.BufferGeometry();
+            const starCount = 8000;
+            const starPos = new Float32Array(starCount * 3);
+            for(let i=0; i<starCount; i++) {
+                // Spread stars from X = -100 to X = 300 (covering all planets)
+                starPos[i*3] = (Math.random() * 400) - 100;
+                starPos[i*3+1] = (Math.random() - 0.5) * 300;
+                starPos[i*3+2] = (Math.random() - 0.5) * 300 - 50;
             }
-
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('randomOffset', new THREE.BufferAttribute(randomOffsets, 1));
-            
-            const material = new THREE.PointsMaterial({
-                size: 0.35,
-                color: new THREE.Color('#00f0ff'),
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+            const starMat = new THREE.PointsMaterial({
+                size: 1.0,
+                color: 0xffffff,
                 transparent: true,
-                opacity: 0.9,
-                map: createParticleTexture(),
+                opacity: 0.5,
+                map: createStarTexture(),
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
             });
-
-            particles = new THREE.Points(geometry, material);
-            scene.add(particles);
+            starParticles = new THREE.Points(starGeo, starMat);
+            scene.add(starParticles);
 
             window.addEventListener('resize', onWindowResize, false);
             
-            document.getElementById('color-picker').addEventListener('input', (e) => {
-                particles.material.color.set(e.target.value);
-            });
-
-            document.querySelectorAll('.template-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentTemplate = e.target.getAttribute('data-type');
-                    generateTemplate(currentTemplate);
-                });
-            });
-
+            updateUIInfo();
             animate();
         }
 
-        function generateTemplate(type) {
-            for (let i = 0; i < particleCount; i++) {
-                let x, y, z;
-                const i3 = i * 3;
-                
-                if (type === 'saturn') {
-                    if (i < particleCount * 0.3) {
-                        // Planet sphere
-                        const u = Math.random();
-                        const v = Math.random();
-                        const theta = u * 2.0 * Math.PI;
-                        const phi = Math.acos(2.0 * v - 1.0);
-                        const r = 3 + Math.random() * 0.2;
-                        x = r * Math.sin(phi) * Math.cos(theta);
-                        y = r * Math.sin(phi) * Math.sin(theta);
-                        z = r * Math.cos(phi);
-                    } else {
-                        // Rings
-                        const angle = Math.random() * Math.PI * 2;
-                        const r = 4.5 + Math.random() * 4 + (Math.random() > 0.8 ? 1 : 0);
-                        x = r * Math.cos(angle);
-                        y = (Math.random() - 0.5) * 0.2;
-                        z = r * Math.sin(angle);
-                        
-                        // Tilt ring
-                        const tilt = 0.4;
-                        const tempY = y * Math.cos(tilt) - z * Math.sin(tilt);
-                        const tempZ = y * Math.sin(tilt) + z * Math.cos(tilt);
-                        y = tempY;
-                        z = tempZ;
-                    }
-                } else if (type === 'hearts') {
-                    const t = Math.random() * Math.PI * 2;
-                    const r = 0.4 + Math.random() * 0.3; 
-                    const sx = 16 * Math.pow(Math.sin(t), 3);
-                    const sy = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-                    
-                    x = (sx * r) * 0.3;
-                    y = (sy * r) * 0.3 + 2; 
-                    z = (Math.random() - 0.5) * 2;
-                } else if (type === 'flowers') {
-                    const u = Math.random() * Math.PI * 2; 
-                    const v = Math.random() * Math.PI; 
-                    const k = 5; 
-                    const r = 6 * Math.cos(k * u) * Math.sin(v);
-                    
-                    x = r * Math.cos(u);
-                    y = r * Math.sin(u);
-                    z = (Math.random() - 0.5) * 1.5 + Math.cos(v) * 1.5;
-                    
-                    // Rotate flat facing up
-                    const tempY = y;
-                    y = z;
-                    z = tempY;
-                } else if (type === 'buddha') {
-                    const rY = Math.random();
-                    let bw, bh, bz;
-                    if (rY < 0.15) {
-                        // Lotus base
-                        bw = 4.5; bh = -4; bz = 4.5;
-                        const angle = Math.random() * Math.PI * 2;
-                        const rad = Math.random() * bw;
-                        x = Math.cos(angle) * rad;
-                        y = bh + Math.random() * 0.8;
-                        z = Math.sin(angle) * rad;
-                    } else if (rY < 0.65) {
-                        // Torso
-                        const t = (rY - 0.15) / 0.5;
-                        bw = 3.5 * (1 - t * 0.6); 
-                        bh = -3 + t * 7;
-                        bz = 2.5 * (1 - t * 0.6);
-                        
-                        const angle = Math.random() * Math.PI * 2;
-                        const rad = Math.random() * bw;
-                        x = Math.cos(angle) * rad;
-                        y = bh;
-                        z = Math.sin(angle) * rad * (bz/bw);
-                    } else if (rY < 0.8) {
-                        // Head
-                        const t = (rY - 0.65) / 0.15;
-                        bw = 1.4; bh = 4.5 + t * 2.5; bz = 1.4;
-                        
-                        const u = Math.random() * Math.PI * 2;
-                        const v = Math.random() * Math.PI;
-                        x = bw * Math.sin(v) * Math.cos(u);
-                        y = bh + bw * Math.cos(v);
-                        z = bz * Math.sin(v) * Math.sin(u);
-                    } else {
-                        // Halo
-                        const angle = Math.random() * Math.PI * 2;
-                        const rad = 4 + Math.random() * 1.5;
-                        x = Math.cos(angle) * rad;
-                        y = 5.5 + Math.sin(angle) * rad;
-                        z = -1.5 + (Math.random() - 0.5) * 0.5;
-                    }
-                } else if (type === 'fireworks') {
-                    const u = Math.random();
-                    const v = Math.random();
-                    const theta = u * 2.0 * Math.PI;
-                    const phi = Math.acos(2.0 * v - 1.0);
-                    
-                    const r = Math.pow(Math.random(), 0.5) * 12; 
-                    
-                    x = r * Math.sin(phi) * Math.cos(theta);
-                    y = r * Math.sin(phi) * Math.sin(theta);
-                    z = r * Math.cos(phi);
-                }
+        function initUI() {
+            const dotsContainer = document.getElementById('nav-dots');
+            SOLAR_SYSTEM.forEach((planet, index) => {
+                const dot = document.createElement('div');
+                dot.className = `nav-dot ${index === 0 ? 'active' : ''}`;
+                dotsContainer.appendChild(dot);
+            });
+        }
 
-                basePositions[i3] = x;
-                basePositions[i3 + 1] = y;
-                basePositions[i3 + 2] = z;
-            }
+        function flyToPlanet(index) {
+            if (index < 0 || index >= SOLAR_SYSTEM.length) return;
+            currentPlanetIndex = index;
+            
+            updateUIInfo();
+            
+            const targetX = currentPlanetIndex * SPACING;
+            
+            // Set new camera targets for the Lerp in animate()
+            targetCamPos.set(targetX, 3, 18);
+            targetLookAt.set(targetX, 0, 0);
+            
+            // Set accent color variable
+            const targetColorHex = SOLAR_SYSTEM[currentPlanetIndex].color;
+            document.documentElement.style.setProperty('--accent', targetColorHex);
+            
+            // Audio modulation based on size removed to keep gentle chord intact
+
+            // Update UI Navigation
+            document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+                dot.className = `nav-dot ${i === currentPlanetIndex ? 'active' : ''}`;
+            });
+        }
+
+        function updateUIInfo() {
+            const planet = SOLAR_SYSTEM[currentPlanetIndex];
+            document.getElementById('planet-name').innerText = planet.name;
+            document.getElementById('planet-type').innerText = planet.type;
+            document.getElementById('info-diameter').innerText = planet.diameter;
+            document.getElementById('info-moons').innerText = planet.moons;
+            document.getElementById('info-distance').innerText = planet.distance;
+            document.getElementById('fun-fact').innerText = planet.funFact;
         }
 
         function initMediaPipe() {
@@ -463,7 +760,7 @@
             }});
             
             hands.setOptions({
-                maxNumHands: 2,
+                maxNumHands: 1,
                 modelComplexity: 1,
                 minDetectionConfidence: 0.6,
                 minTrackingConfidence: 0.6
@@ -485,16 +782,64 @@
                     document.getElementById('ui-container').style.display = 'block';
                 })
                 .catch(err => {
-                    console.error("Camera permission denied or not available.", err);
-                    document.getElementById('loading-text').innerHTML = "CAMERA ERROR<br><span style='font-size:0.7rem;color:#9ba1a6;margin-top:8px;display:block;'>Please allow camera permissions and reload.</span>";
+                    console.error("Camera error.", err);
+                    document.getElementById('loading-text').innerHTML = "CAMERA ERROR<br><span style='font-size:0.7rem;color:#9ba1a6;margin-top:8px;display:block;'>Please allow permissions.</span>";
                     document.querySelector('.spinner').style.display = 'none';
-                    
-                    // Fallback: show UI anyway after delay so user can still see animations
                     setTimeout(() => {
                         document.getElementById('loading').style.display = 'none';
                         document.getElementById('ui-container').style.display = 'block';
                     }, 3000);
                 });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('gesture-toast');
+            toast.innerText = msg;
+            toast.classList.add('show-toast');
+            setTimeout(() => {
+                toast.classList.remove('show-toast');
+            }, 1200);
+        }
+
+        function getHandZone(x) {
+            // x is MediaPipe's raw 0-1 value.
+            // Because the video is mirrored (scaleX(-1)), x=0 is physical RIGHT, x=1 is physical LEFT.
+            // So: physical LEFT  = x close to 1  → ZONE_LEFT
+            //     physical RIGHT = x close to 0  → ZONE_RIGHT
+            if (x > 0.70) return ZONE_LEFT;   // physical hand moved LEFT
+            if (x < 0.30) return ZONE_RIGHT;  // physical hand moved RIGHT
+            return ZONE_CENTER;
+        }
+
+        function checkNavigation(landmarks) {
+            const wristX = landmarks[0].x;
+            const newZone = getHandZone(wristX);
+            const now = Date.now();
+
+            // Hard debounce - prevent double-fire within 1.5 seconds
+            if (now - lastNavTime < 1500) return null;
+
+            if (newZone === ZONE_CENTER) {
+                // Hand returned to center: re-arm navigation
+                if (handZone !== ZONE_CENTER) {
+                    handZone = ZONE_CENTER;
+                    navigationArmed = true;
+                }
+                return null;
+            }
+
+            // Hand is in LEFT or RIGHT zone
+            if (handZone === ZONE_CENTER && navigationArmed && newZone !== ZONE_CENTER) {
+                // This is the CENTER → EDGE transition: FIRE!
+                handZone = newZone;
+                navigationArmed = false; // must return to center before next fire
+                lastNavTime = now;
+                return newZone === ZONE_RIGHT ? 'right' : 'left';
+            }
+
+            // Still in edge zone (holding out to side) — update but don't re-fire
+            handZone = newZone;
+            return null;
         }
 
         function onHandResults(results) {
@@ -507,32 +852,39 @@
 
             if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                 lastDetectionTime = Date.now();
-                let totalTension = 0;
                 
-                for (const landmarks of results.multiHandLandmarks) {
-                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
-                    drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 2});
+                const landmarks = results.multiHandLandmarks[0];
+                
+                drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: 'rgba(255,255,255,0.5)', lineWidth: 2});
+                drawLandmarks(canvasCtx, landmarks, {color: SOLAR_SYSTEM[currentPlanetIndex].color, lineWidth: 1, radius: 3});
 
-                    const wrist = landmarks[0];
-                    const fingerTips = [4, 8, 12, 16, 20];
-                    let avgDist = 0;
-                    
-                    for (const tipIdx of fingerTips) {
-                        const tip = landmarks[tipIdx];
-                        const dx = tip.x - wrist.x;
-                        const dy = tip.y - wrist.y;
-                        const dz = tip.z - wrist.z;
-                        avgDist += Math.sqrt(dx*dx + dy*dy + dz*dz);
-                    }
-                    avgDist /= fingerTips.length;
-                    
-                    // Map distance: ~0.15 is closed, ~0.45 is open
-                    let tension = (avgDist - 0.15) / 0.3;
-                    tension = Math.max(0, Math.min(1, tension));
-                    totalTension += tension;
-                }
+                // 1. Calculate Palm Tension (Open vs Closed)
+                const wrist = landmarks[0];
+                const fingerTips = [4, 8, 12, 16, 20];
+                let avgDist = 0;
                 
-                targetHandTension = totalTension / results.multiHandLandmarks.length;
+                for (const tipIdx of fingerTips) {
+                    const tip = landmarks[tipIdx];
+                    const dx = tip.x - wrist.x;
+                    const dy = tip.y - wrist.y;
+                    const dz = tip.z - wrist.z;
+                    avgDist += Math.sqrt(dx*dx + dy*dy + dz*dz);
+                }
+                avgDist /= fingerTips.length;
+                
+                // Kid-friendly tension (smaller hands, easier to trigger open palm)
+                let tension = (avgDist - 0.1) / 0.25;
+                targetHandTension = Math.max(0, Math.min(1, tension));
+
+                // 2. Zone-based navigation (always active — open palm just zooms)
+                const nav = checkNavigation(landmarks);
+                if (nav === 'right' && currentPlanetIndex < SOLAR_SYSTEM.length - 1) {
+                    showToast('Next Planet ➔');
+                    flyToPlanet(currentPlanetIndex + 1);
+                } else if (nav === 'left' && currentPlanetIndex > 0) {
+                    showToast('⬅ Previous Planet');
+                    flyToPlanet(currentPlanetIndex - 1);
+                }
             }
             canvasCtx.restore();
         }
@@ -547,58 +899,85 @@
             requestAnimationFrame(animate);
             
             time += 0.01;
+
+            // Smoothly fly camera
+            camera.position.lerp(targetCamPos, 0.04);
+            controls.target.lerp(targetLookAt, 0.04);
             controls.update();
 
-            // Timeout fallback if hands disappear
-            if (Date.now() - lastDetectionTime > 500) {
+            // Timeout fallback for tension
+            if (Date.now() - lastDetectionTime > 1500) {
                 targetHandTension = 1.0; 
+                handZone = ZONE_CENTER;
+                navigationArmed = true;
             }
 
-            // Smoothly interpolate tension
+            // Smooth tension
             handTension += (targetHandTension - handTension) * 0.1;
 
-            // 1. Map tension to scaling of entire group
-            const globalScale = 0.4 + handTension * 0.8; 
-            particles.scale.set(globalScale, globalScale, globalScale);
+            // Update all planet meshes
+            planetObjects.forEach((pData, index) => {
+                const mesh = pData.mesh;
+                const isFocused = (index === currentPlanetIndex);
+                
+                // Tension only affects the focused planet
+                const activeTension = isFocused ? handTension : 1.0;
+                
+                // Global scale mapping
+                const globalScale = 0.5 + activeTension * 0.7; 
+                mesh.scale.set(globalScale, globalScale, globalScale);
+                
+                // Expansion mapping
+                const expansion = 0.8 + activeTension * 0.4;
+                
+                const positions = mesh.geometry.attributes.position.array;
+                
+                for (let i = 0; i < pData.count; i++) {
+                    const i3 = i * 3;
+                    
+                    let tx = pData.basePositions[i3] * expansion;
+                    let ty = pData.basePositions[i3+1] * expansion;
+                    let tz = pData.basePositions[i3+2] * expansion;
+                    
+                    const offset = pData.randomOffsets[i];
+                    
+                    // Floating motion
+                    tx += Math.sin(time * 0.5 + offset) * 0.15;
+                    ty += Math.cos(time * 0.6 + offset) * 0.15;
+                    tz += Math.sin(time * 0.7 + offset) * 0.15;
+                    
+                    // Scatter when hand closed
+                    const scatter = (1 - activeTension) * 2.5;
+                    if (scatter > 0.01) {
+                        tx += Math.sin(time * 5 + offset * 10) * scatter;
+                        ty += Math.cos(time * 6 + offset * 10) * scatter;
+                        tz += Math.sin(time * 7 + offset * 10) * scatter;
+                    }
+                    
+                    // Lerp to target shape
+                    positions[i3] += (tx - positions[i3]) * 0.08;
+                    positions[i3+1] += (ty - positions[i3+1]) * 0.08;
+                    positions[i3+2] += (tz - positions[i3+2]) * 0.08;
+                }
+                
+                mesh.geometry.attributes.position.needsUpdate = true;
+                
+                // Planet Rotation
+                mesh.rotation.y = time * 0.15;
+            });
             
-            const positions = particles.geometry.attributes.position.array;
-            const randomOffsets = particles.geometry.attributes.randomOffset.array;
-            
-            // 2. Map tension to expansion/contraction radius
-            const expansion = 0.8 + handTension * 0.4;
-            
-            for (let i = 0; i < particleCount; i++) {
-                const i3 = i * 3;
-                
-                // Target position with expansion applied
-                let tx = basePositions[i3] * expansion;
-                let ty = basePositions[i3+1] * expansion;
-                let tz = basePositions[i3+2] * expansion;
-                
-                const offset = randomOffsets[i];
-                
-                // Organic floating motion
-                tx += Math.sin(time * 0.5 + offset) * 0.2;
-                ty += Math.cos(time * 0.6 + offset) * 0.2;
-                tz += Math.sin(time * 0.7 + offset) * 0.2;
-                
-                // Extra swarming noise when hands are closed
-                const scatter = (1 - handTension) * 1.5;
-                tx += Math.sin(time * 5 + offset * 10) * scatter;
-                ty += Math.cos(time * 6 + offset * 10) * scatter;
-                tz += Math.sin(time * 7 + offset * 10) * scatter;
-                
-                // Lerp current position to target for smooth transition
-                positions[i3] += (tx - positions[i3]) * 0.05;
-                positions[i3+1] += (ty - positions[i3+1]) * 0.05;
-                positions[i3+2] += (tz - positions[i3+2]) * 0.05;
+            // Starfield motion
+            if (starParticles) {
+                // Subtle parallax based on camera position
+                starParticles.position.x = -camera.position.x * 0.1;
             }
             
-            particles.geometry.attributes.position.needsUpdate = true;
-            
-            // Rotate particles slightly independent of orbit controls
-            particles.rotation.y = time * 0.2;
-            
+            // Audio mapping
+            if (isAudioPlaying && gainNode && filterNode) {
+                gainNode.gain.setTargetAtTime(0.05 + handTension * 0.15, audioCtx.currentTime, 0.1);
+                filterNode.frequency.setTargetAtTime(400 + handTension * 1000, audioCtx.currentTime, 0.1);
+            }
+
             renderer.render(scene, camera);
         }
     </script>
