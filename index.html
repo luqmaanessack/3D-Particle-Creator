@@ -310,201 +310,153 @@
 
         const SOLAR_SYSTEM = [
             {
-                name: "Sun",
-                type: "Yellow Dwarf Star",
-                color: "#FFB800",
-                count: 8000,
-                diameter: "1,392,700 km",
-                moons: "0",
-                distance: "0 AU",
-                funFact: "The Sun contains 99.86% of the mass in the entire solar system.",
-                generate: () => {
-                    const u = Math.random();
-                    const v = Math.random();
-                    const theta = u * 2.0 * Math.PI;
-                    const phi = Math.acos(2.0 * v - 1.0);
-                    let r = 4.0;
-                    if (Math.random() > 0.8) r += Math.random() * 2.5; // flares
-                    else r += Math.random() * 0.3;
-                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
-                }
+                name: "Sun", type: "Yellow Dwarf Star", shaderType: 0, color: "#FFB800", radius: 5.0,
+                diameter: "1,392,700 km", moons: "0", distance: "0 AU", funFact: "The Sun contains 99.86% of the mass in the entire solar system."
             },
             {
-                name: "Mercury",
-                type: "Terrestrial Planet",
-                color: "#B0B0B0",
-                count: 2000,
-                diameter: "4,880 km",
-                moons: "0",
-                distance: "0.39 AU",
-                funFact: "Despite being closest to the Sun, Mercury is not the hottest planet.",
-                generate: () => {
-                    const u = Math.random();
-                    const v = Math.random();
-                    const theta = u * 2.0 * Math.PI;
-                    const phi = Math.acos(2.0 * v - 1.0);
-                    let r = 1.5;
-                    const noise = Math.sin(theta * 10) * Math.cos(phi * 10) * 0.05;
-                    r += noise;
-                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
-                }
+                name: "Mercury", type: "Terrestrial Planet", shaderType: 1, color: "#B0B0B0", radius: 1.5,
+                diameter: "4,880 km", moons: "0", distance: "0.39 AU", funFact: "Despite being closest to the Sun, Mercury is not the hottest planet."
             },
             {
-                name: "Venus",
-                type: "Terrestrial Planet",
-                color: "#E6B873",
-                count: 2500,
-                diameter: "12,104 km",
-                moons: "0",
-                distance: "0.72 AU",
-                funFact: "Venus spins in the opposite direction to most planets.",
-                generate: () => {
-                    const u = Math.random();
-                    const v = Math.random();
-                    const theta = u * 2.0 * Math.PI;
-                    const phi = Math.acos(2.0 * v - 1.0);
-                    let r = 2.0;
-                    if (Math.random() > 0.6) r += 0.15;
-                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
-                }
+                name: "Venus", type: "Terrestrial Planet", shaderType: 1, color: "#E6B873", radius: 2.0,
+                diameter: "12,104 km", moons: "0", distance: "0.72 AU", funFact: "Venus spins in the opposite direction to most planets."
             },
             {
-                name: "Earth",
-                type: "Terrestrial Planet",
-                color: "#3B82F6",
-                count: 3000,
-                diameter: "12,742 km",
-                moons: "1",
-                distance: "1.00 AU",
-                funFact: "Earth is the only planet not named after a mythological god or goddess.",
-                generate: () => {
-                    const u = Math.random();
-                    const v = Math.random();
-                    const theta = u * 2.0 * Math.PI;
-                    const phi = Math.acos(2.0 * v - 1.0);
-                    let r = 2.1;
-                    const land = Math.sin(theta * 3) * Math.cos(phi * 2) + Math.sin(theta * 6 + phi * 4) * 0.5;
-                    if (land > 0.3 && Math.random() > 0.2) r += 0.05;
-                    else if (Math.random() > 0.8) r += 0.2; 
-                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
-                }
+                name: "Earth", type: "Terrestrial Planet", shaderType: 1, color: "#3B82F6", radius: 2.1,
+                diameter: "12,742 km", moons: "1", distance: "1.00 AU", funFact: "Earth is the only planet not named after a mythological god or goddess."
             },
             {
-                name: "Mars",
-                type: "Terrestrial Planet",
-                color: "#EF4444",
-                count: 2000,
-                diameter: "6,779 km",
-                moons: "2",
-                distance: "1.52 AU",
-                funFact: "Mars is home to Olympus Mons, the tallest mountain in the solar system.",
-                generate: () => {
-                    const u = Math.random();
-                    const v = Math.random();
-                    const theta = u * 2.0 * Math.PI;
-                    const phi = Math.acos(2.0 * v - 1.0);
-                    let r = 1.7;
-                    if ((phi < 0.2 || phi > Math.PI - 0.2) && Math.random() > 0.3) r += 0.05;
-                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
-                }
+                name: "Mars", type: "Terrestrial Planet", shaderType: 1, color: "#EF4444", radius: 1.7,
+                diameter: "6,779 km", moons: "2", distance: "1.52 AU", funFact: "Mars is home to Olympus Mons, the tallest mountain in the solar system."
             },
             {
-                name: "Jupiter",
-                type: "Gas Giant",
-                color: "#D97757",
-                count: 5000,
-                diameter: "139,820 km",
-                moons: "95",
-                distance: "5.20 AU",
-                funFact: "Jupiter's Great Red Spot is a giant storm bigger than Earth.",
-                generate: () => {
-                    const u = Math.random();
-                    const v = Math.random();
-                    const theta = u * 2.0 * Math.PI;
-                    const phi = Math.acos(2.0 * v - 1.0);
-                    let r = 4.5;
-                    const band = Math.sin(phi * 15);
-                    if (band > 0.5 && Math.random() > 0.5) r -= 0.1;
-                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * 0.9 * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
-                }
+                name: "Jupiter", type: "Gas Giant", shaderType: 2, color: "#D97757", radius: 4.5,
+                diameter: "139,820 km", moons: "95", distance: "5.20 AU", funFact: "Jupiter's Great Red Spot is a giant storm bigger than Earth."
             },
             {
-                name: "Saturn",
-                type: "Gas Giant",
-                color: "#FCD34D",
-                count: 5000,
-                diameter: "116,460 km",
-                moons: "146",
-                distance: "9.58 AU",
-                funFact: "Saturn has the most extensive ring system of any planet.",
-                generate: (i, count) => {
-                    if (i < count * 0.4) {
-                        const u = Math.random();
-                        const v = Math.random();
-                        const theta = u * 2.0 * Math.PI;
-                        const phi = Math.acos(2.0 * v - 1.0);
-                        const r = 3.5 + Math.random() * 0.1;
-                        return { x: r * Math.sin(phi) * Math.cos(theta), y: r * 0.9 * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
-                    } else {
-                        const angle = Math.random() * Math.PI * 2;
-                        let r = Math.random() < 0.6 ? 4.5 + Math.random() * 2.5 : 7.5 + Math.random() * 1.5;
-                        let x = r * Math.cos(angle);
-                        let y = (Math.random() - 0.5) * 0.1;
-                        let z = r * Math.sin(angle);
-                        const tilt = 0.4;
-                        return { x, y: y * Math.cos(tilt) - z * Math.sin(tilt), z: y * Math.sin(tilt) + z * Math.cos(tilt) };
-                    }
-                }
+                name: "Saturn", type: "Gas Giant", shaderType: 2, color: "#FCD34D", radius: 3.5, hasRings: true,
+                diameter: "116,460 km", moons: "146", distance: "9.58 AU", funFact: "Saturn has the most extensive ring system of any planet."
             },
             {
-                name: "Uranus",
-                type: "Ice Giant",
-                color: "#67E8F9",
-                count: 3500,
-                diameter: "50,724 km",
-                moons: "28",
-                distance: "19.18 AU",
-                funFact: "Uranus rotates on its side, with an axial tilt of 98 degrees.",
-                generate: (i, count) => {
-                    if (i < count * 0.7) {
-                        const u = Math.random();
-                        const v = Math.random();
-                        const theta = u * 2.0 * Math.PI;
-                        const phi = Math.acos(2.0 * v - 1.0);
-                        const r = 2.8;
-                        return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
-                    } else {
-                        const angle = Math.random() * Math.PI * 2;
-                        const r = 4.2 + Math.random() * 0.3;
-                        return { x: r * Math.cos(angle), y: r * Math.sin(angle), z: (Math.random() - 0.5) * 0.1 };
-                    }
-                }
+                name: "Uranus", type: "Ice Giant", shaderType: 3, color: "#67E8F9", radius: 2.8,
+                diameter: "50,724 km", moons: "28", distance: "19.18 AU", funFact: "Uranus rotates on its side, with an axial tilt of 98 degrees."
             },
             {
-                name: "Neptune",
-                type: "Ice Giant",
-                color: "#3730A3",
-                count: 3500,
-                diameter: "49,244 km",
-                moons: "16",
-                distance: "30.07 AU",
-                funFact: "Winds on Neptune can reach up to 2,100 km/h, the fastest in the solar system.",
-                generate: (i, count) => {
-                    const u = Math.random();
-                    const v = Math.random();
-                    const theta = u * 2.0 * Math.PI;
-                    const phi = Math.acos(2.0 * v - 1.0);
-                    let r = 2.7;
-                    if (phi > 1.2 && phi < 1.6 && theta > 1.0 && theta < 1.5 && Math.random() > 0.3) r += 0.1;
-                    return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
-                }
+                name: "Neptune", type: "Ice Giant", shaderType: 3, color: "#3730A3", radius: 2.7,
+                diameter: "49,244 km", moons: "16", distance: "30.07 AU", funFact: "Winds on Neptune can reach up to 2,100 km/h, the fastest in the solar system."
             }
         ];
+
+        // --- SHADERS ---
+        const planetVertexShader = `
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            varying vec3 vPosition;
+            void main() {
+                vUv = uv;
+                vNormal = normalize(normalMatrix * normal);
+                vPosition = position;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const planetFragmentShader = `
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            varying vec3 vPosition;
+            uniform vec3 baseColor;
+            uniform float time;
+            uniform float tension;
+            uniform int type;
+
+            float hash(vec3 p) {
+                p = fract(p * 0.3183099 + .1);
+                p *= 17.0;
+                return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+            }
+            float noise(vec3 x) {
+                vec3 i = floor(x);
+                vec3 f = fract(x);
+                f = f * f * (3.0 - 2.0 * f);
+                return mix(mix(mix(hash(i + vec3(0,0,0)), hash(i + vec3(1,0,0)), f.x),
+                               mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+                           mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x),
+                               mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z);
+            }
+            float fbm(vec3 p) {
+                float f = 0.0;
+                f += 0.5000 * noise(p); p = p * 2.02;
+                f += 0.2500 * noise(p); p = p * 2.03;
+                f += 0.1250 * noise(p);
+                return f;
+            }
+
+            void main() {
+                vec3 color = baseColor;
+                float n = 0.0;
+                
+                float t = time * (0.2 + (1.0 - tension) * 2.0);
+
+                if (type == 0) { 
+                    n = fbm(vPosition * 1.5 + t * 0.5);
+                    color = mix(baseColor, vec3(1.0, 0.9, 0.6), n); 
+                } else if (type == 1) { 
+                    n = fbm(vPosition * 1.5 + t * 0.05);
+                    vec3 landColor = baseColor * 0.4;
+                    color = mix(baseColor, landColor, smoothstep(0.4, 0.6, n));
+                } else if (type == 2) { 
+                    n = fbm(vec3(vPosition.x * 1.5, vPosition.y * 6.0, vPosition.z * 1.5) + vec3(t * 0.2, 0.0, 0.0));
+                    color = mix(baseColor * 0.6, baseColor * 1.4, n);
+                } else if (type == 3) { 
+                    n = fbm(vPosition * 2.0 + t * 0.1);
+                    color = mix(baseColor, vec3(0.9, 0.9, 1.0), n * 0.5);
+                }
+
+                vec3 lightDir = normalize(vec3(1.0, 0.5, 1.0));
+                if (type == 0) lightDir = normalize(vNormal); 
+                
+                float diff = max(dot(vNormal, lightDir), 0.0);
+                vec3 finalColor = color * (0.3 + diff * 0.7); 
+                
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        `;
+
+        const auraVertexShader = `
+            varying vec3 vNormal;
+            varying vec3 vViewPosition;
+            void main() {
+                vNormal = normalize(normalMatrix * normal);
+                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                vViewPosition = -mvPosition.xyz;
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `;
+
+        const auraFragmentShader = `
+            varying vec3 vNormal;
+            varying vec3 vViewPosition;
+            uniform vec3 color;
+            uniform float tension;
+
+            void main() {
+                vec3 normal = normalize(vNormal);
+                vec3 viewDir = normalize(vViewPosition);
+                
+                float fresnel = dot(viewDir, normal);
+                fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
+                fresnel = pow(fresnel, 3.0);
+                
+                float intensity = 0.2 + (1.0 - tension) * 1.0;
+                
+                gl_FragColor = vec4(color, fresnel * intensity);
+            }
+        `;
 
         // --- APP STATE & GLOBALS ---
         let scene, camera, renderer, controls;
         let starParticles;
-        const planetObjects = []; // Stores { mesh, basePositions, randomOffsets, count }
+        const planetObjects = []; 
         
         let currentPlanetIndex = 0;
         let targetCamPos = new THREE.Vector3(0, 3, 18);
@@ -515,18 +467,13 @@
         let time = 0;
         let lastDetectionTime = 0;
         
-        // --- Zone-based navigation state machine ---
-        // Screen is split: LEFT (<0.30) | CENTER (0.30-0.70) | RIGHT (>0.70)
-        // Navigation only fires on: CENTER → LEFT or CENTER → RIGHT transition.
-        // Hand MUST return to CENTER before next navigation can fire.
         const ZONE_LEFT  = 'LEFT';
         const ZONE_CENTER= 'CENTER';
         const ZONE_RIGHT = 'RIGHT';
-        let handZone = ZONE_CENTER;    // current zone
-        let navigationArmed = true;    // can we fire? only true when in CENTER
-        let lastNavTime = 0;           // debounce: min 1500ms between navs
+        let handZone = ZONE_CENTER;    
+        let navigationArmed = true;    
+        let lastNavTime = 0;           
 
-        // Audio Context (Synth Drone)
         let audioCtx, oscillator, osc2, osc3, gainNode, filterNode;
         let isAudioPlaying = false;
 
@@ -547,57 +494,32 @@
             if (isAudioPlaying) return;
             try {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
                 gainNode = audioCtx.createGain();
-                gainNode.gain.value = 0.05; // Very gentle volume
-                
+                gainNode.gain.value = 0.05; 
                 filterNode = audioCtx.createBiquadFilter();
                 filterNode.type = 'lowpass';
-                filterNode.frequency.value = 800; // Soft tone
-                
+                filterNode.frequency.value = 800; 
                 gainNode.connect(filterNode);
                 filterNode.connect(audioCtx.destination);
-
-                // Root note (C4) - Sine wave for gentleness
                 oscillator = audioCtx.createOscillator();
                 oscillator.type = 'sine';
                 oscillator.frequency.value = 261.63; 
                 oscillator.connect(gainNode);
                 oscillator.start();
-
-                // Third note (E4)
                 osc2 = audioCtx.createOscillator();
                 osc2.type = 'sine';
                 osc2.frequency.value = 329.63; 
                 osc2.connect(gainNode);
                 osc2.start();
-
-                // Fifth note (G4)
                 osc3 = audioCtx.createOscillator();
                 osc3.type = 'sine';
                 osc3.frequency.value = 392.00; 
                 osc3.connect(gainNode);
                 osc3.start();
-
                 isAudioPlaying = true;
             } catch (e) {
                 console.log("Audio synthesis not supported.");
             }
-        }
-
-        function createParticleTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 64;
-            canvas.height = 64;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-            gradient.addColorStop(0, 'rgba(255,255,255,1)');
-            gradient.addColorStop(0.2, 'rgba(255,255,255,0.8)');
-            gradient.addColorStop(0.6, 'rgba(255,255,255,0.1)');
-            gradient.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 64, 64);
-            return new THREE.CanvasTexture(canvas);
         }
 
         function createStarTexture() {
@@ -634,58 +556,70 @@
             controls.maxDistance = 40;
             controls.target.copy(targetLookAt);
 
-            // Generate ALL planets spatially
+            // Generate Solid Planets
+            const sphereGeo = new THREE.SphereGeometry(1, 64, 64);
+            
             SOLAR_SYSTEM.forEach((planetData, index) => {
-                const count = planetData.count;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(count * 3);
-                const basePositions = new Float32Array(count * 3);
-                const randomOffsets = new Float32Array(count);
+                const pivot = new THREE.Group();
+                pivot.position.x = index * SPACING;
                 
-                for (let i = 0; i < count; i++) {
-                    const pos = planetData.generate(i, count);
-                    
-                    // Local coords
-                    basePositions[i*3] = pos.x;
-                    basePositions[i*3+1] = pos.y;
-                    basePositions[i*3+2] = pos.z;
-                    
-                    // Start randomly scattered
-                    positions[i*3] = pos.x + (Math.random() - 0.5) * 40;
-                    positions[i*3+1] = pos.y + (Math.random() - 0.5) * 40;
-                    positions[i*3+2] = pos.z + (Math.random() - 0.5) * 40;
-                    
-                    randomOffsets[i] = Math.random() * Math.PI * 2;
-                }
-                
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                geometry.setAttribute('randomOffset', new THREE.BufferAttribute(randomOffsets, 1));
-                
-                const material = new THREE.PointsMaterial({
-                    size: 0.35,
-                    color: new THREE.Color(planetData.color),
-                    transparent: true,
-                    opacity: 0.9,
-                    map: createParticleTexture(),
-                    blending: THREE.AdditiveBlending,
-                    depthWrite: false
+                // Procedural Material
+                const material = new THREE.ShaderMaterial({
+                    vertexShader: planetVertexShader,
+                    fragmentShader: planetFragmentShader,
+                    uniforms: {
+                        baseColor: { value: new THREE.Color(planetData.color) },
+                        time: { value: 0 },
+                        tension: { value: 1.0 },
+                        type: { value: planetData.shaderType }
+                    }
                 });
 
-                const mesh = new THREE.Points(geometry, material);
+                const mesh = new THREE.Mesh(sphereGeo, material);
+                mesh.scale.setScalar(planetData.radius);
+                pivot.add(mesh);
                 
-                // Position mesh along X-axis
-                mesh.position.x = index * SPACING;
-                scene.add(mesh);
+                // Aura / Atmosphere
+                const auraMaterial = new THREE.ShaderMaterial({
+                    vertexShader: auraVertexShader,
+                    fragmentShader: auraFragmentShader,
+                    uniforms: {
+                        color: { value: new THREE.Color(planetData.color) },
+                        tension: { value: 1.0 }
+                    },
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                    side: THREE.BackSide 
+                });
                 
-                planetObjects.push({ mesh, basePositions, randomOffsets, count });
+                const auraMesh = new THREE.Mesh(sphereGeo, auraMaterial);
+                auraMesh.scale.setScalar(planetData.radius * 1.15); // Slightly larger
+                pivot.add(auraMesh);
+
+                // Saturn's Rings
+                if (planetData.hasRings) {
+                    const ringGeo = new THREE.RingGeometry(planetData.radius * 1.4, planetData.radius * 2.2, 64);
+                    const ringMat = new THREE.MeshBasicMaterial({ 
+                        color: planetData.color, 
+                        side: THREE.DoubleSide, 
+                        transparent: true, 
+                        opacity: 0.6 
+                    });
+                    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+                    ringMesh.rotation.x = Math.PI / 2 + 0.3; // Tilt
+                    pivot.add(ringMesh);
+                }
+
+                scene.add(pivot);
+                planetObjects.push({ pivot, mesh, aura: auraMesh, data: planetData });
             });
 
-            // Background Stars (Wide distribution)
+            // Background Stars
             const starGeo = new THREE.BufferGeometry();
             const starCount = 8000;
             const starPos = new Float32Array(starCount * 3);
             for(let i=0; i<starCount; i++) {
-                // Spread stars from X = -100 to X = 300 (covering all planets)
                 starPos[i*3] = (Math.random() * 400) - 100;
                 starPos[i*3+1] = (Math.random() - 0.5) * 300;
                 starPos[i*3+2] = (Math.random() - 0.5) * 300 - 50;
@@ -726,17 +660,12 @@
             
             const targetX = currentPlanetIndex * SPACING;
             
-            // Set new camera targets for the Lerp in animate()
             targetCamPos.set(targetX, 3, 18);
             targetLookAt.set(targetX, 0, 0);
             
-            // Set accent color variable
             const targetColorHex = SOLAR_SYSTEM[currentPlanetIndex].color;
             document.documentElement.style.setProperty('--accent', targetColorHex);
             
-            // Audio modulation based on size removed to keep gentle chord intact
-
-            // Update UI Navigation
             document.querySelectorAll('.nav-dot').forEach((dot, i) => {
                 dot.className = `nav-dot ${i === currentPlanetIndex ? 'active' : ''}`;
             });
@@ -802,12 +731,8 @@
         }
 
         function getHandZone(x) {
-            // x is MediaPipe's raw 0-1 value.
-            // Because the video is mirrored (scaleX(-1)), x=0 is physical RIGHT, x=1 is physical LEFT.
-            // So: physical LEFT  = x close to 1  → ZONE_LEFT
-            //     physical RIGHT = x close to 0  → ZONE_RIGHT
-            if (x > 0.70) return ZONE_LEFT;   // physical hand moved LEFT
-            if (x < 0.30) return ZONE_RIGHT;  // physical hand moved RIGHT
+            if (x > 0.70) return ZONE_LEFT;   
+            if (x < 0.30) return ZONE_RIGHT;  
             return ZONE_CENTER;
         }
 
@@ -816,11 +741,9 @@
             const newZone = getHandZone(wristX);
             const now = Date.now();
 
-            // Hard debounce - prevent double-fire within 1.5 seconds
             if (now - lastNavTime < 1500) return null;
 
             if (newZone === ZONE_CENTER) {
-                // Hand returned to center: re-arm navigation
                 if (handZone !== ZONE_CENTER) {
                     handZone = ZONE_CENTER;
                     navigationArmed = true;
@@ -828,16 +751,13 @@
                 return null;
             }
 
-            // Hand is in LEFT or RIGHT zone
             if (handZone === ZONE_CENTER && navigationArmed && newZone !== ZONE_CENTER) {
-                // This is the CENTER → EDGE transition: FIRE!
                 handZone = newZone;
-                navigationArmed = false; // must return to center before next fire
+                navigationArmed = false; 
                 lastNavTime = now;
                 return newZone === ZONE_RIGHT ? 'right' : 'left';
             }
 
-            // Still in edge zone (holding out to side) — update but don't re-fire
             handZone = newZone;
             return null;
         }
@@ -858,7 +778,6 @@
                 drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: 'rgba(255,255,255,0.5)', lineWidth: 2});
                 drawLandmarks(canvasCtx, landmarks, {color: SOLAR_SYSTEM[currentPlanetIndex].color, lineWidth: 1, radius: 3});
 
-                // 1. Calculate Palm Tension (Open vs Closed)
                 const wrist = landmarks[0];
                 const fingerTips = [4, 8, 12, 16, 20];
                 let avgDist = 0;
@@ -872,11 +791,9 @@
                 }
                 avgDist /= fingerTips.length;
                 
-                // Kid-friendly tension (smaller hands, easier to trigger open palm)
                 let tension = (avgDist - 0.1) / 0.25;
                 targetHandTension = Math.max(0, Math.min(1, tension));
 
-                // 2. Zone-based navigation (always active — open palm just zooms)
                 const nav = checkNavigation(landmarks);
                 if (nav === 'right' && currentPlanetIndex < SOLAR_SYSTEM.length - 1) {
                     showToast('Next Planet ➔');
@@ -900,79 +817,41 @@
             
             time += 0.01;
 
-            // Smoothly fly camera
             camera.position.lerp(targetCamPos, 0.04);
             controls.target.lerp(targetLookAt, 0.04);
             controls.update();
 
-            // Timeout fallback for tension
             if (Date.now() - lastDetectionTime > 1500) {
                 targetHandTension = 1.0; 
                 handZone = ZONE_CENTER;
                 navigationArmed = true;
             }
 
-            // Smooth tension
             handTension += (targetHandTension - handTension) * 0.1;
 
-            // Update all planet meshes
-            planetObjects.forEach((pData, index) => {
-                const mesh = pData.mesh;
+            planetObjects.forEach((obj, index) => {
                 const isFocused = (index === currentPlanetIndex);
-                
-                // Tension only affects the focused planet
                 const activeTension = isFocused ? handTension : 1.0;
                 
-                // Global scale mapping
-                const globalScale = 0.5 + activeTension * 0.7; 
-                mesh.scale.set(globalScale, globalScale, globalScale);
+                // 1. Dynamic Scaling (Zoom)
+                const targetScale = 0.6 + activeTension * 0.4;
+                obj.pivot.scale.set(targetScale, targetScale, targetScale);
                 
-                // Expansion mapping
-                const expansion = 0.8 + activeTension * 0.4;
+                // 2. Rotation Speed
+                const rotSpeed = isFocused ? (0.005 + (1.0 - activeTension) * 0.03) : 0.005;
+                obj.pivot.rotation.y += rotSpeed;
                 
-                const positions = mesh.geometry.attributes.position.array;
+                // 3. Update Shaders
+                obj.mesh.material.uniforms.time.value = time;
+                obj.mesh.material.uniforms.tension.value = activeTension;
                 
-                for (let i = 0; i < pData.count; i++) {
-                    const i3 = i * 3;
-                    
-                    let tx = pData.basePositions[i3] * expansion;
-                    let ty = pData.basePositions[i3+1] * expansion;
-                    let tz = pData.basePositions[i3+2] * expansion;
-                    
-                    const offset = pData.randomOffsets[i];
-                    
-                    // Floating motion
-                    tx += Math.sin(time * 0.5 + offset) * 0.15;
-                    ty += Math.cos(time * 0.6 + offset) * 0.15;
-                    tz += Math.sin(time * 0.7 + offset) * 0.15;
-                    
-                    // Scatter when hand closed
-                    const scatter = (1 - activeTension) * 2.5;
-                    if (scatter > 0.01) {
-                        tx += Math.sin(time * 5 + offset * 10) * scatter;
-                        ty += Math.cos(time * 6 + offset * 10) * scatter;
-                        tz += Math.sin(time * 7 + offset * 10) * scatter;
-                    }
-                    
-                    // Lerp to target shape
-                    positions[i3] += (tx - positions[i3]) * 0.08;
-                    positions[i3+1] += (ty - positions[i3+1]) * 0.08;
-                    positions[i3+2] += (tz - positions[i3+2]) * 0.08;
-                }
-                
-                mesh.geometry.attributes.position.needsUpdate = true;
-                
-                // Planet Rotation
-                mesh.rotation.y = time * 0.15;
+                obj.aura.material.uniforms.tension.value = activeTension;
             });
             
-            // Starfield motion
             if (starParticles) {
-                // Subtle parallax based on camera position
                 starParticles.position.x = -camera.position.x * 0.1;
             }
             
-            // Audio mapping
             if (isAudioPlaying && gainNode && filterNode) {
                 gainNode.gain.setTargetAtTime(0.05 + handTension * 0.15, audioCtx.currentTime, 0.1);
                 filterNode.frequency.setTargetAtTime(400 + handTension * 1000, audioCtx.currentTime, 0.1);
