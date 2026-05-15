@@ -50,6 +50,11 @@
             transition: border-color 0.5s ease;
         }
 
+        #ui-container.overview-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -143,7 +148,7 @@
         }
 
         #loading {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -220,9 +225,9 @@
         }
 
         #start-overlay {
-            position: absolute;
+            position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(5, 5, 8, 0.9);
+            background: rgba(5, 5, 8, 0.95);
             z-index: 1000;
             display: flex;
             flex-direction: column;
@@ -299,6 +304,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     
+    <!-- Post-Processing Shaders -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    
+    <!-- Post-Processing Passes -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    
     <!-- MediaPipe Hand Tracking -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -307,42 +322,57 @@
     <script>
         // --- SPATIAL SOLAR SYSTEM DATA MODEL ---
         const SPACING = 25; // Distance between planets on X-axis
+        const UNIFORM_BODY_RADIUS = 3.0;
+        const VIEW_FOCUS_OFFSET = 5.5;
+        const OVERVIEW_ENTER_HAND_SIZE = 0.18;
+        const OVERVIEW_EXIT_HAND_SIZE = 0.27;
+        const VIEW_MODE_COOLDOWN_MS = 900;
+        const TEXTURE_BASE = 'https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets/images/';
 
         const SOLAR_SYSTEM = [
             {
-                name: "Sun", type: "Yellow Dwarf Star", shaderType: 0, color: "#FFB800", radius: 5.0,
+                name: "Sun", type: "Yellow Dwarf Star", shaderType: 0, color: "#FFB800", radius: UNIFORM_BODY_RADIUS,
+                texture: "sunmap.jpg",
                 diameter: "1,392,700 km", moons: "0", distance: "0 AU", funFact: "The Sun contains 99.86% of the mass in the entire solar system."
             },
             {
-                name: "Mercury", type: "Terrestrial Planet", shaderType: 1, color: "#B0B0B0", radius: 1.5,
+                name: "Mercury", type: "Terrestrial Planet", shaderType: 1, color: "#B0B0B0", radius: UNIFORM_BODY_RADIUS,
+                texture: "mercurymap.jpg",
                 diameter: "4,880 km", moons: "0", distance: "0.39 AU", funFact: "Despite being closest to the Sun, Mercury is not the hottest planet."
             },
             {
-                name: "Venus", type: "Terrestrial Planet", shaderType: 1, color: "#E6B873", radius: 2.0,
+                name: "Venus", type: "Terrestrial Planet", shaderType: 1, color: "#E6B873", radius: UNIFORM_BODY_RADIUS,
+                texture: "venusmap.jpg",
                 diameter: "12,104 km", moons: "0", distance: "0.72 AU", funFact: "Venus spins in the opposite direction to most planets."
             },
             {
-                name: "Earth", type: "Terrestrial Planet", shaderType: 1, color: "#3B82F6", radius: 2.1,
+                name: "Earth", type: "Terrestrial Planet", shaderType: 1, color: "#3B82F6", radius: UNIFORM_BODY_RADIUS,
+                texture: "earthmap1k.jpg", bump: "earthbump1k.jpg", clouds: "earthcloudmap.jpg",
                 diameter: "12,742 km", moons: "1", distance: "1.00 AU", funFact: "Earth is the only planet not named after a mythological god or goddess."
             },
             {
-                name: "Mars", type: "Terrestrial Planet", shaderType: 1, color: "#EF4444", radius: 1.7,
+                name: "Mars", type: "Terrestrial Planet", shaderType: 1, color: "#EF4444", radius: UNIFORM_BODY_RADIUS,
+                texture: "marsmap1k.jpg", bump: "marsbump1k.jpg",
                 diameter: "6,779 km", moons: "2", distance: "1.52 AU", funFact: "Mars is home to Olympus Mons, the tallest mountain in the solar system."
             },
             {
-                name: "Jupiter", type: "Gas Giant", shaderType: 2, color: "#D97757", radius: 4.5,
+                name: "Jupiter", type: "Gas Giant", shaderType: 2, color: "#D97757", radius: UNIFORM_BODY_RADIUS,
+                texture: "jupitermap.jpg",
                 diameter: "139,820 km", moons: "95", distance: "5.20 AU", funFact: "Jupiter's Great Red Spot is a giant storm bigger than Earth."
             },
             {
-                name: "Saturn", type: "Gas Giant", shaderType: 2, color: "#FCD34D", radius: 3.5, hasRings: true,
+                name: "Saturn", type: "Gas Giant", shaderType: 2, color: "#FCD34D", radius: UNIFORM_BODY_RADIUS, hasRings: true,
+                texture: "saturnmap.jpg", ringTexture: "saturnringcolor.jpg",
                 diameter: "116,460 km", moons: "146", distance: "9.58 AU", funFact: "Saturn has the most extensive ring system of any planet."
             },
             {
-                name: "Uranus", type: "Ice Giant", shaderType: 3, color: "#67E8F9", radius: 2.8,
+                name: "Uranus", type: "Ice Giant", shaderType: 3, color: "#67E8F9", radius: UNIFORM_BODY_RADIUS,
+                texture: "uranusmap.jpg",
                 diameter: "50,724 km", moons: "28", distance: "19.18 AU", funFact: "Uranus rotates on its side, with an axial tilt of 98 degrees."
             },
             {
-                name: "Neptune", type: "Ice Giant", shaderType: 3, color: "#3730A3", radius: 2.7,
+                name: "Neptune", type: "Ice Giant", shaderType: 3, color: "#3730A3", radius: UNIFORM_BODY_RADIUS,
+                texture: "neptunemap.jpg",
                 diameter: "49,244 km", moons: "16", distance: "30.07 AU", funFact: "Winds on Neptune can reach up to 2,100 km/h, the fastest in the solar system."
             }
         ];
@@ -425,10 +455,12 @@
         const auraVertexShader = `
             varying vec3 vNormal;
             varying vec3 vViewPosition;
+            varying vec3 vWorldPosition;
             void main() {
                 vNormal = normalize(normalMatrix * normal);
                 vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
                 vViewPosition = -mvPosition.xyz;
+                vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
                 gl_Position = projectionMatrix * mvPosition;
             }
         `;
@@ -436,36 +468,59 @@
         const auraFragmentShader = `
             varying vec3 vNormal;
             varying vec3 vViewPosition;
+            varying vec3 vWorldPosition;
             uniform vec3 color;
             uniform float tension;
 
             void main() {
                 vec3 normal = normalize(vNormal);
                 vec3 viewDir = normalize(vViewPosition);
+                // Sun is at origin (0,0,0)
+                vec3 lightDir = normalize(-vWorldPosition);
                 
+                // Fresnel for edge glow
                 float fresnel = dot(viewDir, normal);
                 fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
                 fresnel = pow(fresnel, 3.0);
                 
+                // Volumetric Atmospheric Scattering approximation
+                float lightDot = dot(normal, lightDir);
+                float wrap = 0.5; // Soft wrap lighting for atmosphere
+                float scatter = max(0.0, (lightDot + wrap) / (1.0 + wrap));
+                scatter = smoothstep(0.0, 1.0, scatter);
+                
+                // Sunset terminator effect (shift to orange/red)
+                vec3 sunsetColor = mix(vec3(1.0, 0.4, 0.0), color, scatter);
+                
+                // If this is the Sun (distance to origin < 10), it's always fully lit
+                float distToSun = length(vWorldPosition);
+                if (distToSun < 10.0) {
+                    scatter = 1.0;
+                    sunsetColor = color;
+                }
+                
                 float intensity = 0.2 + (1.0 - tension) * 1.0;
                 
-                gl_FragColor = vec4(color, fresnel * intensity);
+                // Final atmospheric glow
+                gl_FragColor = vec4(sunsetColor, fresnel * scatter * intensity * 1.5);
             }
         `;
 
         // --- APP STATE & GLOBALS ---
-        let scene, camera, renderer, controls;
+        let scene, camera, renderer, controls, composer, focusLight;
         let starParticles;
         const planetObjects = []; 
         
         let currentPlanetIndex = 0;
         let targetCamPos = new THREE.Vector3(0, 3, 18);
-        let targetLookAt = new THREE.Vector3(0, 0, 0);
+        let targetLookAt = new THREE.Vector3(VIEW_FOCUS_OFFSET, 0, 0);
 
         let handTension = 1.0; 
         let targetHandTension = 1.0;
         let time = 0;
         let lastDetectionTime = 0;
+        let isOverviewMode = false;
+        let lastViewModeChange = 0;
         
         const ZONE_LEFT  = 'LEFT';
         const ZONE_CENTER= 'CENTER';
@@ -476,14 +531,18 @@
 
         let audioCtx, oscillator, osc2, osc3, gainNode, filterNode;
         let isAudioPlaying = false;
+        let ringTexture; // Lazily generated once Saturn's rings are created.
+        let textureLoader;
 
         initThreeJS();
         initUI();
         initMediaPipe();
         
         document.getElementById('start-overlay').addEventListener('click', function() {
-            this.style.opacity = '0';
-            setTimeout(() => this.style.display = 'none', 500);
+            const overlay = this;
+            overlay.style.opacity = '0';
+            overlay.style.pointerEvents = 'none';
+            setTimeout(() => overlay.style.display = 'none', 500);
             startAudio();
             if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
@@ -534,6 +593,75 @@
             return new THREE.CanvasTexture(canvas);
         }
 
+        function createRingTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            // Base color
+            ctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
+            ctx.fillRect(0, 0, 1, 256);
+            
+            // Draw procedural ring bands
+            for (let i = 0; i < 256; i++) {
+                let opacity = Math.random() * 0.8 + 0.1;
+                // Create gaps and divisions
+                if (Math.random() < 0.15) opacity = 0.0; 
+                // Simulate Cassini division
+                if (i > 180 && i < 200) opacity = 0.0; 
+                
+                ctx.clearRect(0, i, 1, 1);
+                ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+                ctx.fillRect(0, i, 1, 1);
+            }
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function loadSpaceTexture(fileName) {
+            if (!fileName) return null;
+
+            const texture = textureLoader.load(
+                `${TEXTURE_BASE}${fileName}`,
+                (loadedTexture) => {
+                    loadedTexture.needsUpdate = true;
+                },
+                undefined,
+                () => console.warn(`Could not load texture: ${fileName}`)
+            );
+
+            texture.encoding = THREE.sRGBEncoding;
+            texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            return texture;
+        }
+
+        function createPlanetMaterial(planetData) {
+            const surfaceMap = loadSpaceTexture(planetData.texture);
+            const baseColor = new THREE.Color(planetData.color);
+
+            if (planetData.shaderType === 0) {
+                return new THREE.MeshBasicMaterial({
+                    map: surfaceMap,
+                    color: baseColor
+                });
+            }
+
+            const material = new THREE.MeshStandardMaterial({
+                map: surfaceMap,
+                color: 0xffffff,
+                roughness: planetData.shaderType === 2 ? 0.82 : 0.68,
+                metalness: 0.0
+            });
+
+            if (planetData.bump) {
+                material.bumpMap = loadSpaceTexture(planetData.bump);
+                material.bumpScale = planetData.name === "Earth" ? 0.08 : 0.12;
+            }
+
+            return material;
+        }
+
         function initThreeJS() {
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x050508, 0.015);
@@ -544,6 +672,13 @@
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            
+            // Enable Shadows
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
             controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -555,29 +690,36 @@
             controls.minDistance = 5;
             controls.maxDistance = 40;
             controls.target.copy(targetLookAt);
+            textureLoader = new THREE.TextureLoader();
+            textureLoader.crossOrigin = 'anonymous';
 
-            // Generate Solid Planets
-            const sphereGeo = new THREE.SphereGeometry(1, 64, 64);
+            // Generate texture-mapped planets
+            const sphereGeo = new THREE.SphereGeometry(1, 96, 96);
             
             SOLAR_SYSTEM.forEach((planetData, index) => {
                 const pivot = new THREE.Group();
                 pivot.position.x = index * SPACING;
-                
-                // Procedural Material
-                const material = new THREE.ShaderMaterial({
-                    vertexShader: planetVertexShader,
-                    fragmentShader: planetFragmentShader,
-                    uniforms: {
-                        baseColor: { value: new THREE.Color(planetData.color) },
-                        time: { value: 0 },
-                        tension: { value: 1.0 },
-                        type: { value: planetData.shaderType }
-                    }
-                });
+                const material = createPlanetMaterial(planetData);
 
                 const mesh = new THREE.Mesh(sphereGeo, material);
                 mesh.scale.setScalar(planetData.radius);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
                 pivot.add(mesh);
+
+                let cloudMesh = null;
+                if (planetData.clouds) {
+                    const cloudMaterial = new THREE.MeshPhongMaterial({
+                        map: loadSpaceTexture(planetData.clouds),
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.42,
+                        depthWrite: false
+                    });
+                    cloudMesh = new THREE.Mesh(sphereGeo, cloudMaterial);
+                    cloudMesh.scale.setScalar(planetData.radius * 1.012);
+                    pivot.add(cloudMesh);
+                }
                 
                 // Aura / Atmosphere
                 const auraMaterial = new THREE.ShaderMaterial({
@@ -594,25 +736,44 @@
                 });
                 
                 const auraMesh = new THREE.Mesh(sphereGeo, auraMaterial);
-                auraMesh.scale.setScalar(planetData.radius * 1.15); // Slightly larger
+                const auraScale = planetData.shaderType === 2 ? 1.045 : 1.15;
+                auraMesh.scale.setScalar(planetData.radius * auraScale);
                 pivot.add(auraMesh);
 
                 // Saturn's Rings
                 if (planetData.hasRings) {
+                    if (!ringTexture) ringTexture = loadSpaceTexture(planetData.ringTexture) || createRingTexture();
+                    
                     const ringGeo = new THREE.RingGeometry(planetData.radius * 1.4, planetData.radius * 2.2, 64);
-                    const ringMat = new THREE.MeshBasicMaterial({ 
+                    
+                    // Modify UVs so the 1D texture maps from inner to outer radius
+                    const posAttribute = ringGeo.attributes.position;
+                    const uvAttribute = ringGeo.attributes.uv;
+                    for (let i = 0; i < posAttribute.count; i++) {
+                        const vertex = new THREE.Vector3().fromBufferAttribute(posAttribute, i);
+                        const distance = vertex.length();
+                        const normalizedDistance = (distance - planetData.radius * 1.4) / (planetData.radius * 2.2 - planetData.radius * 1.4);
+                        uvAttribute.setY(i, normalizedDistance);
+                    }
+
+                    const ringMat = new THREE.MeshStandardMaterial({ 
                         color: planetData.color, 
+                        map: ringTexture,
+                        alphaMap: ringTexture,
                         side: THREE.DoubleSide, 
                         transparent: true, 
-                        opacity: 0.6 
+                        opacity: 0.9,
+                        roughness: 0.8
                     });
                     const ringMesh = new THREE.Mesh(ringGeo, ringMat);
                     ringMesh.rotation.x = Math.PI / 2 + 0.3; // Tilt
+                    ringMesh.castShadow = true;
+                    ringMesh.receiveShadow = true;
                     pivot.add(ringMesh);
                 }
 
                 scene.add(pivot);
-                planetObjects.push({ pivot, mesh, aura: auraMesh, data: planetData });
+                planetObjects.push({ pivot, mesh, aura: auraMesh, cloud: cloudMesh, data: planetData });
             });
 
             // Background Stars
@@ -636,6 +797,35 @@
             });
             starParticles = new THREE.Points(starGeo, starMat);
             scene.add(starParticles);
+
+            // Lighting Setup
+            const ambientLight = new THREE.AmbientLight(0x0a0a14, 0.5);
+            scene.add(ambientLight);
+
+            const fillLight = new THREE.HemisphereLight(0x8fb8ff, 0x130915, 0.35);
+            scene.add(fillLight);
+
+            focusLight = new THREE.PointLight(0xcfe6ff, 0.45, 70);
+            scene.add(focusLight);
+
+            const sunLight = new THREE.PointLight(0xffeedd, 4.0, 500);
+            sunLight.position.set(0, 0, 0); // Sun is at origin
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.bias = -0.001;
+            scene.add(sunLight);
+
+            // Post-Processing Setup
+            const renderScene = new THREE.RenderPass(scene, camera);
+            const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+            bloomPass.threshold = 0.7;
+            bloomPass.strength = 0.85; 
+            bloomPass.radius = 0.5;
+
+            composer = new THREE.EffectComposer(renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
 
             window.addEventListener('resize', onWindowResize, false);
             
@@ -661,7 +851,7 @@
             const targetX = currentPlanetIndex * SPACING;
             
             targetCamPos.set(targetX, 3, 18);
-            targetLookAt.set(targetX, 0, 0);
+            targetLookAt.set(targetX + VIEW_FOCUS_OFFSET, 0, 0);
             
             const targetColorHex = SOLAR_SYSTEM[currentPlanetIndex].color;
             document.documentElement.style.setProperty('--accent', targetColorHex);
@@ -669,6 +859,36 @@
             document.querySelectorAll('.nav-dot').forEach((dot, i) => {
                 dot.className = `nav-dot ${i === currentPlanetIndex ? 'active' : ''}`;
             });
+        }
+
+        function setOverviewMode(enabled) {
+            if (isOverviewMode === enabled) return;
+
+            isOverviewMode = enabled;
+            lastViewModeChange = Date.now();
+            handZone = ZONE_CENTER;
+            navigationArmed = !enabled;
+            document.getElementById('ui-container').classList.toggle('overview-hidden', enabled);
+            if (controls) {
+                controls.autoRotate = !enabled;
+                controls.maxDistance = enabled ? 320 : 40;
+            }
+            if (focusLight) {
+                focusLight.intensity = enabled ? 0.85 : 0.45;
+                focusLight.distance = enabled ? 340 : 70;
+            }
+
+            if (enabled) {
+                const centerX = ((SOLAR_SYSTEM.length - 1) * SPACING) / 2;
+                targetCamPos.set(centerX, 12, 155);
+                targetLookAt.set(centerX, 0, 0);
+                targetHandTension = 1.0;
+                showToast('Solar Alignment View');
+                return;
+            }
+
+            flyToPlanet(currentPlanetIndex);
+            showToast('Single Planet View');
         }
 
         function updateUIInfo() {
@@ -737,6 +957,8 @@
         }
 
         function checkNavigation(landmarks) {
+            if (isOverviewMode) return null;
+
             const wristX = landmarks[0].x;
             const newZone = getHandZone(wristX);
             const now = Date.now();
@@ -762,6 +984,36 @@
             return null;
         }
 
+        function getHandScreenSize(landmarks) {
+            let minX = 1;
+            let maxX = 0;
+            let minY = 1;
+            let maxY = 0;
+
+            for (const landmark of landmarks) {
+                minX = Math.min(minX, landmark.x);
+                maxX = Math.max(maxX, landmark.x);
+                minY = Math.min(minY, landmark.y);
+                maxY = Math.max(maxY, landmark.y);
+            }
+
+            const width = maxX - minX;
+            const height = maxY - minY;
+            return Math.sqrt(width * width + height * height);
+        }
+
+        function updateDepthViewMode(landmarks) {
+            const now = Date.now();
+            if (now - lastViewModeChange < VIEW_MODE_COOLDOWN_MS) return;
+
+            const handSize = getHandScreenSize(landmarks);
+            if (!isOverviewMode && handSize < OVERVIEW_ENTER_HAND_SIZE) {
+                setOverviewMode(true);
+            } else if (isOverviewMode && handSize > OVERVIEW_EXIT_HAND_SIZE) {
+                setOverviewMode(false);
+            }
+        }
+
         function onHandResults(results) {
             const canvasElement = document.getElementById('output-canvas');
             const canvasCtx = canvasElement.getContext('2d');
@@ -777,6 +1029,7 @@
                 
                 drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: 'rgba(255,255,255,0.5)', lineWidth: 2});
                 drawLandmarks(canvasCtx, landmarks, {color: SOLAR_SYSTEM[currentPlanetIndex].color, lineWidth: 1, radius: 3});
+                updateDepthViewMode(landmarks);
 
                 const wrist = landmarks[0];
                 const fingerTips = [4, 8, 12, 16, 20];
@@ -792,7 +1045,7 @@
                 avgDist /= fingerTips.length;
                 
                 let tension = (avgDist - 0.1) / 0.25;
-                targetHandTension = Math.max(0, Math.min(1, tension));
+                targetHandTension = isOverviewMode ? 1.0 : Math.max(0, Math.min(1, tension));
 
                 const nav = checkNavigation(landmarks);
                 if (nav === 'right' && currentPlanetIndex < SOLAR_SYSTEM.length - 1) {
@@ -810,6 +1063,7 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            if (composer) composer.setSize(window.innerWidth, window.innerHeight);
         }
 
         function animate() {
@@ -820,6 +1074,9 @@
             camera.position.lerp(targetCamPos, 0.04);
             controls.target.lerp(targetLookAt, 0.04);
             controls.update();
+            if (focusLight) {
+                focusLight.position.copy(camera.position);
+            }
 
             if (Date.now() - lastDetectionTime > 1500) {
                 targetHandTension = 1.0; 
@@ -834,7 +1091,7 @@
                 const activeTension = isFocused ? handTension : 1.0;
                 
                 // 1. Dynamic Scaling (Zoom)
-                const targetScale = 0.6 + activeTension * 0.4;
+                const targetScale = isOverviewMode ? 0.9 : 0.6 + activeTension * 0.4;
                 obj.pivot.scale.set(targetScale, targetScale, targetScale);
                 
                 // 2. Rotation Speed
@@ -842,8 +1099,14 @@
                 obj.pivot.rotation.y += rotSpeed;
                 
                 // 3. Update Shaders
-                obj.mesh.material.uniforms.time.value = time;
-                obj.mesh.material.uniforms.tension.value = activeTension;
+                if (obj.mesh.material.userData.shader) {
+                    obj.mesh.material.userData.shader.uniforms.time.value = time;
+                    obj.mesh.material.userData.shader.uniforms.tension.value = activeTension;
+                }
+
+                if (obj.cloud) {
+                    obj.cloud.rotation.y += 0.0015;
+                }
                 
                 obj.aura.material.uniforms.tension.value = activeTension;
             });
@@ -857,7 +1120,7 @@
                 filterNode.frequency.setTargetAtTime(400 + handTension * 1000, audioCtx.currentTime, 0.1);
             }
 
-            renderer.render(scene, camera);
+            composer.render();
         }
     </script>
 </body>
