@@ -332,47 +332,47 @@
         const SOLAR_SYSTEM = [
             {
                 name: "Sun", type: "Yellow Dwarf Star", shaderType: 0, color: "#FFB800", radius: UNIFORM_BODY_RADIUS,
-                texture: "sunmap.jpg",
+                texture: "sunmap.jpg", tilt: 7.25, spin: 0.0035,
                 diameter: "1,392,700 km", moons: "0", distance: "0 AU", funFact: "The Sun contains 99.86% of the mass in the entire solar system."
             },
             {
                 name: "Mercury", type: "Terrestrial Planet", shaderType: 1, color: "#B0B0B0", radius: UNIFORM_BODY_RADIUS,
-                texture: "mercurymap.jpg",
+                texture: "mercurymap.jpg", tilt: 0.03, spin: 0.004,
                 diameter: "4,880 km", moons: "0", distance: "0.39 AU", funFact: "Despite being closest to the Sun, Mercury is not the hottest planet."
             },
             {
                 name: "Venus", type: "Terrestrial Planet", shaderType: 1, color: "#E6B873", radius: UNIFORM_BODY_RADIUS,
-                texture: "venusmap.jpg",
+                texture: "venusmap.jpg", tilt: 177.4, spin: -0.002,
                 diameter: "12,104 km", moons: "0", distance: "0.72 AU", funFact: "Venus spins in the opposite direction to most planets."
             },
             {
                 name: "Earth", type: "Terrestrial Planet", shaderType: 1, color: "#3B82F6", radius: UNIFORM_BODY_RADIUS,
-                texture: "earthmap1k.jpg", bump: "earthbump1k.jpg", clouds: "earthcloudmap.jpg",
+                texture: "earthmap1k.jpg", bump: "earthbump1k.jpg", clouds: "earthcloudmap.jpg", tilt: 23.5, spin: 0.008,
                 diameter: "12,742 km", moons: "1", distance: "1.00 AU", funFact: "Earth is the only planet not named after a mythological god or goddess."
             },
             {
                 name: "Mars", type: "Terrestrial Planet", shaderType: 1, color: "#EF4444", radius: UNIFORM_BODY_RADIUS,
-                texture: "marsmap1k.jpg", bump: "marsbump1k.jpg",
+                texture: "marsmap1k.jpg", bump: "marsbump1k.jpg", tilt: 25.2, spin: 0.0075,
                 diameter: "6,779 km", moons: "2", distance: "1.52 AU", funFact: "Mars is home to Olympus Mons, the tallest mountain in the solar system."
             },
             {
                 name: "Jupiter", type: "Gas Giant", shaderType: 2, color: "#D97757", radius: UNIFORM_BODY_RADIUS,
-                texture: "jupitermap.jpg",
+                texture: "jupitermap.jpg", tilt: 3.1, spin: 0.015,
                 diameter: "139,820 km", moons: "95", distance: "5.20 AU", funFact: "Jupiter's Great Red Spot is a giant storm bigger than Earth."
             },
             {
                 name: "Saturn", type: "Gas Giant", shaderType: 2, color: "#FCD34D", radius: UNIFORM_BODY_RADIUS, hasRings: true,
-                texture: "saturnmap.jpg", ringTexture: "saturnringcolor.jpg",
+                texture: "saturnmap.jpg", ringTexture: "saturnringcolor.jpg", tilt: 26.7, spin: 0.013,
                 diameter: "116,460 km", moons: "146", distance: "9.58 AU", funFact: "Saturn has the most extensive ring system of any planet."
             },
             {
                 name: "Uranus", type: "Ice Giant", shaderType: 3, color: "#67E8F9", radius: UNIFORM_BODY_RADIUS,
-                texture: "uranusmap.jpg",
+                texture: "uranusmap.jpg", tilt: 97.8, spin: -0.01,
                 diameter: "50,724 km", moons: "28", distance: "19.18 AU", funFact: "Uranus rotates on its side, with an axial tilt of 98 degrees."
             },
             {
                 name: "Neptune", type: "Ice Giant", shaderType: 3, color: "#3730A3", radius: UNIFORM_BODY_RADIUS,
-                texture: "neptunemap.jpg",
+                texture: "neptunemap.jpg", tilt: 28.3, spin: 0.011,
                 diameter: "49,244 km", moons: "16", distance: "30.07 AU", funFact: "Winds on Neptune can reach up to 2,100 km/h, the fastest in the solar system."
             }
         ];
@@ -533,6 +533,7 @@
         let isAudioPlaying = false;
         let ringTexture; // Lazily generated once Saturn's rings are created.
         let textureLoader;
+        const orbitGuides = [];
 
         initThreeJS();
         initUI();
@@ -619,47 +620,179 @@
             return new THREE.CanvasTexture(canvas);
         }
 
-        function loadSpaceTexture(fileName) {
-            if (!fileName) return null;
+        function createPlanetTexture(planetData, kind = 'surface') {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            const base = new THREE.Color(planetData.color);
+            const accent = base.clone().offsetHSL(0.04, 0.2, 0.18);
+            const shade = base.clone().offsetHSL(-0.03, -0.05, -0.22);
+            const toCss = (color, alpha = 1) => `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${alpha})`;
 
-            const texture = textureLoader.load(
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, toCss(accent));
+            gradient.addColorStop(0.5, toCss(base));
+            gradient.addColorStop(1, toCss(shade));
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (kind === 'clouds') {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < 120; i++) {
+                    const y = Math.random() * canvas.height;
+                    const x = Math.random() * canvas.width;
+                    const width = 80 + Math.random() * 220;
+                    const height = 8 + Math.random() * 28;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${0.08 + Math.random() * 0.18})`;
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, width, height, Math.random() * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (planetData.shaderType === 0) {
+                for (let i = 0; i < 1300; i++) {
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * canvas.height;
+                    const radius = 1 + Math.random() * 8;
+                    ctx.fillStyle = `rgba(255, ${170 + Math.random() * 85}, ${30 + Math.random() * 120}, ${0.12 + Math.random() * 0.28})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (planetData.shaderType === 2) {
+                for (let y = 0; y < canvas.height; y += 10 + Math.random() * 18) {
+                    ctx.fillStyle = toCss(Math.random() > 0.5 ? accent : shade, 0.34 + Math.random() * 0.28);
+                    ctx.fillRect(0, y, canvas.width, 4 + Math.random() * 12);
+                }
+                if (planetData.name === "Jupiter") {
+                    ctx.fillStyle = 'rgba(160, 52, 32, 0.58)';
+                    ctx.beginPath();
+                    ctx.ellipse(canvas.width * 0.62, canvas.height * 0.57, 70, 30, -0.18, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (planetData.name === "Earth") {
+                ctx.fillStyle = 'rgba(38, 126, 68, 0.82)';
+                for (let i = 0; i < 18; i++) {
+                    ctx.beginPath();
+                    ctx.ellipse(Math.random() * canvas.width, Math.random() * canvas.height, 24 + Math.random() * 76, 12 + Math.random() * 48, Math.random() * Math.PI, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else {
+                for (let i = 0; i < 160; i++) {
+                    ctx.fillStyle = toCss(Math.random() > 0.5 ? accent : shade, 0.08 + Math.random() * 0.2);
+                    ctx.beginPath();
+                    ctx.ellipse(Math.random() * canvas.width, Math.random() * canvas.height, 18 + Math.random() * 80, 4 + Math.random() * 18, Math.random() * Math.PI, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.encoding = THREE.sRGBEncoding;
+            texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        function createBumpTexture(planetData) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#808080';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < 900; i++) {
+                const value = 80 + Math.random() * 120;
+                ctx.fillStyle = `rgb(${value}, ${value}, ${value})`;
+                ctx.beginPath();
+                ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 0.6 + Math.random() * 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        function loadSpaceTexture(fileName, fallbackTexture, onReady) {
+            if (!fileName) return fallbackTexture || null;
+
+            textureLoader.load(
                 `${TEXTURE_BASE}${fileName}`,
                 (loadedTexture) => {
+                    loadedTexture.encoding = THREE.sRGBEncoding;
+                    loadedTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
                     loadedTexture.needsUpdate = true;
+                    if (onReady) onReady(loadedTexture);
                 },
                 undefined,
                 () => console.warn(`Could not load texture: ${fileName}`)
             );
 
-            texture.encoding = THREE.sRGBEncoding;
-            texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-            return texture;
+            return fallbackTexture || null;
         }
 
         function createPlanetMaterial(planetData) {
-            const surfaceMap = loadSpaceTexture(planetData.texture);
+            const fallbackMap = createPlanetTexture(planetData);
             const baseColor = new THREE.Color(planetData.color);
+            let material;
 
             if (planetData.shaderType === 0) {
-                return new THREE.MeshBasicMaterial({
-                    map: surfaceMap,
-                    color: baseColor
+                material = new THREE.MeshBasicMaterial({
+                    map: fallbackMap,
+                    color: baseColor,
+                    fog: false
                 });
+            } else {
+                material = new THREE.MeshStandardMaterial({
+                    map: fallbackMap,
+                    color: 0xffffff,
+                    roughness: planetData.shaderType === 2 ? 0.86 : 0.72,
+                    metalness: 0.0
+                });
+
+                if (planetData.bump || planetData.shaderType === 1) {
+                    material.bumpMap = createBumpTexture(planetData);
+                    material.bumpScale = planetData.name === "Earth" ? 0.045 : 0.075;
+                    loadSpaceTexture(planetData.bump, material.bumpMap, (texture) => {
+                        material.bumpMap = texture;
+                        material.bumpScale = planetData.name === "Earth" ? 0.08 : 0.12;
+                        material.needsUpdate = true;
+                    });
+                }
             }
 
-            const material = new THREE.MeshStandardMaterial({
-                map: surfaceMap,
-                color: 0xffffff,
-                roughness: planetData.shaderType === 2 ? 0.82 : 0.68,
-                metalness: 0.0
+            loadSpaceTexture(planetData.texture, fallbackMap, (texture) => {
+                material.map = texture;
+                material.needsUpdate = true;
             });
 
-            if (planetData.bump) {
-                material.bumpMap = loadSpaceTexture(planetData.bump);
-                material.bumpScale = planetData.name === "Earth" ? 0.08 : 0.12;
+            return material;
+        }
+
+        function createOrbitGuide(index) {
+            if (index === 0) return null;
+
+            const points = [];
+            const radius = index * SPACING;
+            const segments = 192;
+            for (let i = 0; i <= segments; i++) {
+                const angle = (i / segments) * Math.PI * 2;
+                points.push(new THREE.Vector3(Math.cos(angle) * radius, -4.2, Math.sin(angle) * radius * 0.38));
             }
 
-            return material;
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({
+                color: 0x8fb8ff,
+                transparent: true,
+                opacity: 0.12,
+                depthWrite: false
+            });
+            const guide = new THREE.Line(geometry, material);
+            guide.visible = false;
+            scene.add(guide);
+            orbitGuides.push(guide);
+            return guide;
         }
 
         function initThreeJS() {
@@ -672,8 +805,9 @@
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.outputEncoding = THREE.sRGBEncoding;
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.0;
+            renderer.toneMappingExposure = 1.15;
             
             // Enable Shadows
             renderer.shadowMap.enabled = true;
@@ -700,24 +834,32 @@
                 const pivot = new THREE.Group();
                 pivot.position.x = index * SPACING;
                 const material = createPlanetMaterial(planetData);
+                const axialTilt = THREE.MathUtils.degToRad(planetData.tilt || 0);
 
                 const mesh = new THREE.Mesh(sphereGeo, material);
                 mesh.scale.setScalar(planetData.radius);
+                mesh.rotation.z = axialTilt;
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
                 pivot.add(mesh);
 
                 let cloudMesh = null;
                 if (planetData.clouds) {
+                    const cloudFallback = createPlanetTexture(planetData, 'clouds');
                     const cloudMaterial = new THREE.MeshPhongMaterial({
-                        map: loadSpaceTexture(planetData.clouds),
+                        map: cloudFallback,
                         color: 0xffffff,
                         transparent: true,
                         opacity: 0.42,
                         depthWrite: false
                     });
+                    loadSpaceTexture(planetData.clouds, cloudFallback, (texture) => {
+                        cloudMaterial.map = texture;
+                        cloudMaterial.needsUpdate = true;
+                    });
                     cloudMesh = new THREE.Mesh(sphereGeo, cloudMaterial);
                     cloudMesh.scale.setScalar(planetData.radius * 1.012);
+                    cloudMesh.rotation.z = axialTilt;
                     pivot.add(cloudMesh);
                 }
                 
@@ -741,10 +883,16 @@
                 pivot.add(auraMesh);
 
                 // Saturn's Rings
+                let ringMesh = null;
                 if (planetData.hasRings) {
-                    if (!ringTexture) ringTexture = loadSpaceTexture(planetData.ringTexture) || createRingTexture();
+                    if (!ringTexture) {
+                        ringTexture = createRingTexture();
+                        loadSpaceTexture(planetData.ringTexture, ringTexture, (texture) => {
+                            ringTexture = texture;
+                        });
+                    }
                     
-                    const ringGeo = new THREE.RingGeometry(planetData.radius * 1.4, planetData.radius * 2.2, 64);
+                    const ringGeo = new THREE.RingGeometry(planetData.radius * 1.42, planetData.radius * 2.35, 128);
                     
                     // Modify UVs so the 1D texture maps from inner to outer radius
                     const posAttribute = ringGeo.attributes.position;
@@ -765,15 +913,21 @@
                         opacity: 0.9,
                         roughness: 0.8
                     });
-                    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-                    ringMesh.rotation.x = Math.PI / 2 + 0.3; // Tilt
+                    ringMesh = new THREE.Mesh(ringGeo, ringMat);
+                    loadSpaceTexture(planetData.ringTexture, ringTexture, (texture) => {
+                        ringMat.map = texture;
+                        ringMat.alphaMap = texture;
+                        ringMat.needsUpdate = true;
+                    });
+                    ringMesh.rotation.x = Math.PI / 2 + axialTilt;
                     ringMesh.castShadow = true;
                     ringMesh.receiveShadow = true;
                     pivot.add(ringMesh);
                 }
 
+                createOrbitGuide(index);
                 scene.add(pivot);
-                planetObjects.push({ pivot, mesh, aura: auraMesh, cloud: cloudMesh, data: planetData });
+                planetObjects.push({ pivot, mesh, aura: auraMesh, cloud: cloudMesh, ring: ringMesh, data: planetData });
             });
 
             // Background Stars
@@ -799,16 +953,16 @@
             scene.add(starParticles);
 
             // Lighting Setup
-            const ambientLight = new THREE.AmbientLight(0x0a0a14, 0.5);
+            const ambientLight = new THREE.AmbientLight(0x0a0a14, 0.28);
             scene.add(ambientLight);
 
-            const fillLight = new THREE.HemisphereLight(0x8fb8ff, 0x130915, 0.35);
+            const fillLight = new THREE.HemisphereLight(0x8fb8ff, 0x130915, 0.22);
             scene.add(fillLight);
 
-            focusLight = new THREE.PointLight(0xcfe6ff, 0.45, 70);
+            focusLight = new THREE.PointLight(0xcfe6ff, 0.62, 70);
             scene.add(focusLight);
 
-            const sunLight = new THREE.PointLight(0xffeedd, 4.0, 500);
+            const sunLight = new THREE.PointLight(0xffeedd, 5.5, 500);
             sunLight.position.set(0, 0, 0); // Sun is at origin
             sunLight.castShadow = true;
             sunLight.shadow.mapSize.width = 2048;
@@ -877,6 +1031,9 @@
                 focusLight.intensity = enabled ? 0.85 : 0.45;
                 focusLight.distance = enabled ? 340 : 70;
             }
+            orbitGuides.forEach((guide) => {
+                guide.visible = enabled;
+            });
 
             if (enabled) {
                 const centerX = ((SOLAR_SYSTEM.length - 1) * SPACING) / 2;
@@ -1095,8 +1252,13 @@
                 obj.pivot.scale.set(targetScale, targetScale, targetScale);
                 
                 // 2. Rotation Speed
-                const rotSpeed = isFocused ? (0.005 + (1.0 - activeTension) * 0.03) : 0.005;
-                obj.pivot.rotation.y += rotSpeed;
+                const baseSpin = obj.data.spin || 0.005;
+                const rotSpeed = isFocused ? (baseSpin + (1.0 - activeTension) * 0.03) : baseSpin;
+                obj.mesh.rotation.y += rotSpeed;
+                obj.aura.rotation.y += rotSpeed * 0.35;
+                if (obj.ring) {
+                    obj.ring.rotation.z += rotSpeed * 0.12;
+                }
                 
                 // 3. Update Shaders
                 if (obj.mesh.material.userData.shader) {
@@ -1105,7 +1267,7 @@
                 }
 
                 if (obj.cloud) {
-                    obj.cloud.rotation.y += 0.0015;
+                    obj.cloud.rotation.y += rotSpeed * 1.25;
                 }
                 
                 obj.aura.material.uniforms.tension.value = activeTension;
